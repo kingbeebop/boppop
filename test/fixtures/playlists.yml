@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  theme: MyString
+  winner: 1
+  video: MyString
+  soundcloud_url: MyString
+  pic: MyString
+  contest: false
+
+two:
+  theme: MyString
+  winner: 1
+  video: MyString
+  soundcloud_url: MyString
+  pic: MyString
+  contest: false
