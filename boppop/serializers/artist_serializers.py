@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from models import Artist
+from boppop.models.artist import Artist
 
 class ArtistSerializer(serializers.ModelSerializer):
     class Meta:

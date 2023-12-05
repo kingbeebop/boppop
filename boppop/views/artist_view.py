@@ -1,12 +1,5 @@
-from models import(
-    Artist,
-    Song,
-)
-from serializers import (
-    ArtistSerializer,
-    SongSerializer,
-)
-from django.shortcuts import render
+from boppop.models import Artist
+from boppop.serializers import ArtistSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from models import Playlist
+from boppop.models.playlist import Playlist
 
 class PlaylistSerializer(serializers.ModelSerializer):
     class Meta:

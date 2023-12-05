@@ -1,5 +1,5 @@
-from models import Song, Artist
-from serializers import SongSerializer, ArtistSerializer
+from boppop.models import Song, Artist
+from boppop.serializers import SongSerializer, ArtistSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
