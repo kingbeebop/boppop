@@ -23,12 +23,12 @@ def artist_list(request):
             return Response({'status': status.HTTP_400_BAD_REQUEST, 'error': serializer.errors})
         
 #/artists/id
-@api_view(["GET", "POST", "PUT", "DELETE"])
+@api_view(["GET", "PUT", "DELETE"])
 def artist_detail(request, id):
 
     try:
         artist = Artist.objects.get(pk=id)
-    except artist.DoesNotExist:
+    except Artist.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == "GET":
@@ -37,7 +37,7 @@ def artist_detail(request, id):
             {"inbox_artist": serializer.data, "token": artist.client.token}
         )
 
-    elif request.method == "POST":
+    elif request.method == "PUT":
 
         serializer = ArtistSerializer(artist, data=request.data)
         if serializer.is_valid():

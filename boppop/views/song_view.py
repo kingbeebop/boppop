@@ -1,20 +1,20 @@
-from boppop.models import Song, Artist
-from boppop.serializers import SongSerializer, ArtistSerializer
+from boppop.models import Song
+from boppop.serializers import SongSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
 
-#/artists/
+#/songs/
 @api_view(["GET", "POST"])
 def song_list(request):
     if request.method == "GET":
-        artists = Artist.objects.all()
-        serializer = ArtistSerializer(artists, many=True)
+        songs = Song.objects.all()
+        serializer = SongSerializer(songs, many=True)
         return Response(serializer.data)
 
     if request.method == "POST":
-        serializer = ArtistSerializer(data=request.data)
+        serializer = SongSerializer(data=request.data)
 
         if serializer.is_valid():
             serializer.save()
@@ -24,12 +24,12 @@ def song_list(request):
             return Response({'status': status.HTTP_400_BAD_REQUEST, 'error': serializer.errors})
         
 #/artists/id
-@api_view(["GET", "POST", "PUT", "DELETE"])
+@api_view(["GET", "PUT", "DELETE"])
 def song_detail(request, id):
 
     try:
         song = Song.objects.get(pk=id)
-    except song.DoesNotExist:
+    except Song.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == "GET":
@@ -38,9 +38,9 @@ def song_detail(request, id):
             {"inbox_artist": serializer.data, "token": song.client.token}
         )
 
-    elif request.method == "POST":
+    elif request.method == "PUT":
 
-        serializer = ArtistSerializer(song, data=request.data)
+        serializer = SongSerializer(song, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
