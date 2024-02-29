@@ -5,9 +5,9 @@ from .song import Song
 from .vote import Vote
 
 __all__ = [
-    Artist,
-    Playlist,
-    Review,
-    Song,
-    Vote
+    'Artist',
+    'Playlist',
+    'Review',
+    'Song',
+    'Vote'
 ]

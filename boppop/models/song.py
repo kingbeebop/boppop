@@ -5,6 +5,7 @@ class Song(models.Model):
     url = models.CharField(max_length=200, default="Enter API Key Here")
     playlist = models.ForeignKey('Playlist', on_delete=models.CASCADE, related_name='songs')
     artist = models.ForeignKey('Artist', on_delete=models.CASCADE)
+    is_winner = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title

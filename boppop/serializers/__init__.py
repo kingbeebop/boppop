@@ -5,7 +5,7 @@ from .review_serializers import *
 from .vote_serializers import *
 
 __all__ = [
-    "ArtistSerializer",
-    "SongSerializer",
-    "PlaylistSerializer"
+    'ArtistSerializer',
+    'SongSerializer',
+    'PlaylistSerializer'
 ]
