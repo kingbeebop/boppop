@@ -4,7 +4,6 @@ class Vote(models.Model):
     artist = models.ForeignKey('Artist', on_delete=models.CASCADE)
     song = models.ForeignKey('Song', on_delete=models.CASCADE)
     playlist = models.ForeignKey('Playlist', on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ['artist', 'playlist']

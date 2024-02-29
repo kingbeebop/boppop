@@ -1,6 +1,6 @@
 from .artist_view import *
-from .playlist_view import *
-from .song_view import *
+from .playlist_views import *
+from .song_views import *
 
 all = [
     'artist_list',

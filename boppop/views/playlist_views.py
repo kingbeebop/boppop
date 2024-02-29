@@ -2,6 +2,7 @@ from boppop.models import Playlist
 from boppop.serializers import PlaylistSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from django.http import JsonResponse
 from rest_framework import status
 
 
@@ -51,6 +52,13 @@ def playlist_detail(request, id):
 #/playlists/current
 @api_view(["GET"])
 def current_playlist(request):
-    playlist = Playlist.objects.all().last()
-    serializer = PlaylistSerializer(playlist)
-    return Response(serializer)
+    try:
+        playlist = Playlist.objects.get(active=True)
+        serializer = PlaylistSerializer(playlist)
+        return Response(serializer.data)
+    except Playlist.DoesNotExist:
+        response_data = {
+            'status': 'no_active_playlist',
+            'message': 'No active playlist found.',
+        }
+        return JsonResponse(response_data)
