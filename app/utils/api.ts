@@ -35,3 +35,30 @@ export const fetchPlaylists = async (limit: number, page: number, search?: strin
   
     return response.json();
   };
+
+  export const fetchArtists = async () => {
+    const response = await fetch(`${apiUrl}/artists`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch artists data');
+    }
+  
+    return response.json();
+  };
+  
+  export const fetchArtist = async (artistId: string) => {
+    const response = await fetch(`${apiUrl}/artists/${artistId}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch artist data');
+    }
+  
+    return response.json();
+  };
+
+  export const fetchArtistSongs = async (artistName: string) => {
+    const response = await fetch(`${apiUrl}/artists/${encodeURIComponent(artistName)}/songs`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch artist songs');
+    }
+  
+    return response.json();
+  };
