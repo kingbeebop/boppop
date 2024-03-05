@@ -36,16 +36,21 @@ export const fetchPlaylists = async (limit: number, page: number, search?: strin
     return response.json();
   };
 
-  export const fetchArtists = async () => {
-    const response = await fetch(`${apiUrl}/artists`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch artists data');
-    }
+export const fetchArtists = async (limit: number = 10, page: number = 1, search: string = '') => {
+  const queryParams = new URLSearchParams({ limit: String(limit), page: String(page), search });
+  const url = `${apiUrl}/artists?${queryParams.toString()}`;
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch artists data');
+  }
+
+  return response.json();
+};
+
   
-    return response.json();
-  };
-  
-  export const fetchArtist = async (artistId: string) => {
+export const fetchArtist = async (artistId: string) => {
     const response = await fetch(`${apiUrl}/artists/${artistId}`);
     if (!response.ok) {
       throw new Error('Failed to fetch artist data');
@@ -54,7 +59,7 @@ export const fetchPlaylists = async (limit: number, page: number, search?: strin
     return response.json();
   };
 
-  export const fetchArtistSongs = async (artistName: string) => {
+export const fetchArtistSongs = async (artistName: string) => {
     const response = await fetch(`${apiUrl}/artists/${encodeURIComponent(artistName)}/songs`);
     if (!response.ok) {
       throw new Error('Failed to fetch artist songs');
