@@ -28,36 +28,31 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # Your local Next.js development server
-]
-
-CORS_ALLOW_CREDENTIALS = True
-
 # Application definition
 
 INSTALLED_APPS = [
     'boppop',
     'jazzmin',
-    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
 
 ROOT_URLCONF = 'boppop.urls'
 
@@ -111,6 +106,37 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        #"rest_framework.authentication.SessionAuthentication",
+        "boppop.authentication.NoCSRFSessionAuthentication",
+    ],
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+    ],
+}
+
+AUTHENTICATION_BACKENDS = [
+    "social_core.backends.google.GoogleOAuth2",
+    #"django.contrib.auth.backends.ModelBackend",
+    "boppop.custom_auth_backend.CaseInsensitiveModelBackend",
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+SESSION_COOKIE_SAMESITE = None
+
+# Configure session settings
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Use the database for session storage
+SESSION_COOKIE_AGE = 1209600  # Set the session cookie age in seconds (e.g., 2 weeks)
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+]
+
+CORS_ALLOW_CREDENTIALS = True
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
