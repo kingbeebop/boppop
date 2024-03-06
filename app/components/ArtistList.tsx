@@ -11,7 +11,7 @@ const ArtistList: React.FC = () => {
   const fetchArtistsData = async () => {
     try {
       const data = await fetchArtists(10, page, search);
-      setArtists(data);
+      setArtists(data.results);
     } catch (error) {
       console.error('Error fetching artists data:', error);
     }

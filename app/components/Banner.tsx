@@ -8,8 +8,8 @@ const Banner: React.FC = () => {
   const contest = false;
 
   return (
-    <div className="bg-gray-800 text-white p-4">
-      <h1 className="text-3xl font-bold">Bop Pop Challenge</h1>
+    <div className="bg-purple-800 text-white p-4">
+      <h1 className="display-3 fw-bold mb-4">Bop Pop Challenge</h1>
       <ChallengeLink theme={theme} />
     </div>
   );

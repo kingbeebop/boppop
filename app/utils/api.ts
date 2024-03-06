@@ -72,46 +72,65 @@ export const fetchPlaylist = async (playlistId: string) => {
 };
 
 export const fetchPlaylists = async (
-  limit: number,
-  page: number,
-  search: string
+  limit: number = 10,
+  page: number = 1,
+  search: string = ''
 ) => {
-  const queryParams = new URLSearchParams({
-    limit: String(limit),
-    page: String(page),
-    search,
-  });
+  const apiUrl = 'http://localhost:8000/api'; // You can move this to a global config if needed
+  const url = `${apiUrl}/playlists/?limit=${limit}&page=${page}&search=${search}`;
 
-  return apiRequest(`/playlists/?${queryParams.toString()}`);
+  console.log('Fetching Playlists:', url);
+
+  try {
+    const response = await fetch(url, {
+      mode: 'cors', // Add this line
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      console.error('Error fetching playlists data:', response);
+      throw new Error(`Failed to fetch data from ${url}`);
+    }
+
+    const responseData = await response.json();
+    console.log('Response:', responseData); // Log the response for inspection
+    return responseData;
+  } catch (error: any) {
+    console.error('Error fetching playlists data:', error.message);
+    throw error;
+  }
 };
 
-// export const fetchArtists = async (
-//   limit: number = 10,
-//   page: number = 1,
-//   search: string = ''
-// ) => {
-//   const queryParams = new URLSearchParams({
-//     limit: String(limit),
-//     page: String(page),
-//     search,
-//   });
-
-//   return apiRequest(`/artists?${queryParams.toString()}`);
-// };
 export const fetchArtists = async (
   limit: number = 10,
   page: number = 1,
   search: string = ''
 ) => {
-  const queryParams = new URLSearchParams({
-    limit: String(limit),
-    page: String(page),
-    search,
-  });
+  const apiUrl = 'http://localhost:8000/api'; // You can move this to a global config if needed
+  const url = `${apiUrl}/artists/?limit=${limit}&page=${page}&search=${search}`;
 
-  return apiRequest(`/artists/?${queryParams.toString()}`);
+  console.log('Fetching Artists:', url);
 
+  try {
+    const response = await fetch(url, {
+      mode: 'cors', // Add this line
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      console.error('Error fetching artists data:', response);
+      throw new Error(`Failed to fetch data from ${url}`);
+    }
+
+    const responseData = await response.json();
+    console.log('Response:', responseData); // Log the response for inspection
+    return responseData;
+  } catch (error: any) {
+    console.error('Error fetching artists data:', error.message);
+    throw error;
+  }
 };
+
 
 export const fetchArtist = async (artistId: string) => {
   return apiRequest(`/artists/${artistId}`);

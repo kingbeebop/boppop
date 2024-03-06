@@ -11,7 +11,7 @@ const Archive: React.FC = () => {
   const fetchPlaylistsData = async () => {
     try {
       const data = await fetchPlaylists(10, page, search);
-      setPlaylists(data);
+      setPlaylists(data.results);
     } catch (error) {
       console.error('Error fetching playlists data:', error);
     }
