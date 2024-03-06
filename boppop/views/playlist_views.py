@@ -4,15 +4,27 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import JsonResponse
 from rest_framework import status
+from rest_framework.pagination import PageNumberPagination
 
 
 #/playlists/
 @api_view(["GET", "POST"])
 def playlist_list(request):
+    # Pagination
+    paginator = PageNumberPagination()
+    paginator.page_size = 10  # Set the number of items per page
+
     if request.method == "GET":
         playlists = Playlist.objects.all()
-        serializer = PlaylistSerializer(playlists, many=True)
-        return Response(serializer.data)
+
+        # Searching by name
+        name_query = request.GET.get('name', None)
+        if name_query:
+            playlists = playlists.filter(name__icontains=name_query)
+
+        result_page = paginator.paginate_queryset(playlists, request)
+        serializer = PlaylistSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     if request.method == "POST":
         serializer = PlaylistSerializer(data=request.data)
@@ -20,7 +32,6 @@ def playlist_list(request):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-            
         else:
             return Response({'status': status.HTTP_400_BAD_REQUEST, 'error': serializer.errors})
         

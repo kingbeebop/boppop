@@ -1,4 +1,4 @@
-from .artist_view import *
+from .artist_views import *
 from .playlist_views import *
 from .song_views import *
 

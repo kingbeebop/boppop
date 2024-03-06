@@ -67,3 +67,72 @@ export const fetchArtistSongs = async (artistName: string) => {
   
     return response.json();
   };
+
+export const fetchCurrentPlaylist = async () => {
+    const response = await fetch(`${apiUrl}/playlists/current/`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch current playlist data');
+    }
+  
+    return response.json();
+  };
+
+export const fetchSubmission = async () => {
+    const response = await fetch(`${apiUrl}/submission/`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch submission data');
+    }
+  
+    return response.json();
+  };
+
+interface SubmissionData {
+    url: string;
+    title: string;
+  }
+
+export const submitOrUpdateSubmission = async (data: SubmissionData) => {
+    const response = await fetch(`${apiUrl}/submit/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+  
+    if (!response.ok) {
+      throw new Error('Failed to submit or update submission');
+    }
+  
+    return response.json();
+  };
+
+export const fetchContestPlaylist = async () => {
+    const response = await fetch(`${apiUrl}/playlists/current/id`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch contest playlist data');
+    }
+  
+    return response.json();
+  };
+
+  interface VoteReviewData {
+    id: string;
+    review: string;
+  }
+  
+export const submitVoteAndReview = async (data: VoteReviewData) => {
+    const response = await fetch(`${apiUrl}/vote/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+  
+    if (!response.ok) {
+      throw new Error('Failed to submit vote and review');
+    }
+  
+    return response.json();
+  };

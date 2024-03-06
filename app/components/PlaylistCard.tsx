@@ -10,11 +10,9 @@ interface PlaylistCardProps {
 const PlaylistCard: React.FC<PlaylistCardProps> = ({ id, theme }) => {
   return (
     <Link href={`/playlist/${id}`}>
-      <a>
-        <div>
-          <p>{id} - {theme}</p>
-        </div>
-      </a>
+      <div>
+        <p>{id} - {theme}</p>
+      </div>
     </Link>
   );
 };

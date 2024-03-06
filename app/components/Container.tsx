@@ -1,8 +1,12 @@
 // components/Container.tsx
-import React from 'react';
+import React, { ReactNode } from 'react';
 
-const Container: React.FC = () => {
-  return <div className="p-4">Hello World</div>;
+interface ContainerProps {
+  children?: ReactNode;
+}
+
+const Container: React.FC<ContainerProps> = ({ children }) => {
+  return <div className="p-4">{children || 'Hello World'}</div>;
 };
 
 export default Container;

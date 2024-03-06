@@ -3,22 +3,37 @@ from boppop.serializers import ArtistSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.pagination import PageNumberPagination
+from django.db.models import Q
 
 #/artists/
 @api_view(["GET", "POST"])
 def artist_list(request):
     if request.method == "GET":
-        artists = Artist.objects.all()
-        serializer = ArtistSerializer(artists, many=True)
-        return Response(serializer.data)
+        # Get query parameters for pagination and search
+        page = request.GET.get("page", 1)
+        search_query = request.GET.get("search", "")
 
-    if request.method == "POST":
+        # Filter artists based on search query
+        artists = Artist.objects.filter(Q(name__icontains=search_query))
+
+        # Use Django REST framework's PageNumberPagination
+        paginator = PageNumberPagination()
+        paginator.page_size = 10  # Set the desired page size
+        paginated_artists = paginator.paginate_queryset(artists, request)
+
+        # Serialize the paginated artists
+        serializer = ArtistSerializer(paginated_artists, many=True)
+
+        # Return paginated response
+        return paginator.get_paginated_response(serializer.data)
+
+    elif request.method == "POST":
         serializer = ArtistSerializer(data=request.data)
 
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-            
         else:
             return Response({'status': status.HTTP_400_BAD_REQUEST, 'error': serializer.errors})
         

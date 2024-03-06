@@ -10,11 +10,9 @@ interface ArtistCardProps {
 const ArtistCard: React.FC<ArtistCardProps> = ({ id, name }) => {
   return (
     <Link href={`/artists/${encodeURIComponent(name)}`}>
-      <a>
-        <div>
-          <p>{name}</p>
-        </div>
-      </a>
+      <div>
+        <p>{name}</p>
+      </div>
     </Link>
   );
 };
