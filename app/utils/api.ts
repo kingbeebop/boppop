@@ -1,6 +1,19 @@
 // api.ts
 const apiUrl = 'http://localhost:8000/api';
 
+const baseFetch = async (url: string, options?: RequestInit) => {
+  const response = await fetch(`${apiUrl}${url}`, {
+    credentials: 'include',
+    ...options,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch data from ${url}`);
+  }
+
+  return response.json();
+};
+
 export const loginRequest = async (username: string, password: string) => {
   // Implement your login request logic
 };
@@ -36,18 +49,27 @@ export const fetchPlaylists = async (limit: number, page: number, search?: strin
     return response.json();
   };
 
-export const fetchArtists = async (limit: number = 10, page: number = 1, search: string = '') => {
-  const queryParams = new URLSearchParams({ limit: String(limit), page: String(page), search });
-  const url = `${apiUrl}/artists?${queryParams.toString()}`;
-
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch artists data');
-  }
-
-  return response.json();
-};
+  export const fetchArtists = async (
+    limit: number = 10,
+    page: number = 1,
+    search: string = ''
+  ) => {
+    const queryParams = new URLSearchParams({
+      limit: String(limit),
+      page: String(page),
+      search,
+    });
+    
+    const url = `/artists/?${queryParams.toString()}`;
+  
+    const response = await baseFetch(url);  // Assuming you have a baseFetch function as mentioned in the previous response
+  
+    if (!response.ok) {
+      throw new Error('Failed to fetch artists data');
+    }
+  
+    return response.json();
+  };
 
   
 export const fetchArtist = async (artistId: string) => {

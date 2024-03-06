@@ -4,7 +4,7 @@ import { fetchArtists } from '../utils/api';
 import ArtistCard from './ArtistCard';
 
 const ArtistList: React.FC = () => {
-  const [artists, setArtists] = useState<{ id: string; name: string }[]>([]);
+  const [artists, setArtists] = useState<{ id: string; username: string }[]>([]);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
 
@@ -41,7 +41,7 @@ const ArtistList: React.FC = () => {
       />
       <div>
         {artists.map((artist) => (
-          <ArtistCard key={artist.id} id={artist.id} name={artist.name} />
+          <ArtistCard key={artist.id} id={artist.id} name={artist.username} />
         ))}
       </div>
       <button onClick={handleLoadMore}>Load More</button>

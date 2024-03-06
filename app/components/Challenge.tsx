@@ -50,7 +50,7 @@ const Challenge: React.FC<ChallengeProps> = () => {
       );
     }
   };
-
+//TODO: complete this:
   return (
     <div>
       <h1>Challenge Page</h1>
@@ -60,7 +60,7 @@ const Challenge: React.FC<ChallengeProps> = () => {
         <div>Render contest-related components here</div>
       ) : (
         // Render submission form
-        handleSubmission()
+        <div>Submission form</div>
       )}
     </div>
   );
