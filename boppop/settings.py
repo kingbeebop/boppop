@@ -78,13 +78,18 @@ WSGI_APPLICATION = 'boppop.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+from decouple import config
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('DB_NAME', default='', cast=str),
+        'USER': config('DB_USER', default='', cast=str),
+        'PASSWORD': config('DB_PASSWORD', default='', cast=str),
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
-
 
 AUTH_USER_MODEL = 'boppop.Artist'
 
