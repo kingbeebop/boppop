@@ -161,3 +161,6 @@ cython_debug/
 
 #migrations
 bopop/migrations/
+
+#static files
+boppop/static/
