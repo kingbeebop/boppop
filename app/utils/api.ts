@@ -1,33 +1,9 @@
 // api.ts
 const apiUrl = 'http://localhost:8000/api';
 
-// const baseFetch = async (url: string, options?: RequestInit) => {
-//   console.log('Fetching:', `${apiUrl}${url}`);
-//   const response = await fetch(`${apiUrl}${url}`, {
-//     credentials: 'include',
-//     ...options,
-//   });
-
-//   if (!response.ok) {
-//     throw new Error(`Failed to fetch data from ${url}`);
-//   }
-
-//   return response.json();
-// };
-
-// const apiRequest = async (url: string) => {
-//   const response = await baseFetch(url);
-
-//   if (!response.ok) {
-//     throw new Error(`Failed to fetch data from ${url}`);
-//   }
-
-//   return response.json();
-// };
 const baseFetch = async (url: string, options?: RequestInit) => {
   const response = await fetch(`${apiUrl}${url}`, {
-    // credentials: 'include',
-    mode: 'cors', // Add this line
+    mode: 'cors',
     credentials: 'include',
     ...options,
   });
@@ -50,17 +26,56 @@ const apiRequest = async (url: string) => {
   return response.json();
 };
 
-
 export const loginRequest = async (username: string, password: string) => {
-  // Implement your login request logic
+  try {
+    const response = await fetch(`${apiUrl}/login/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username, password }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data; // Return response data if needed
+    } else {
+      throw new Error('Invalid credentials');
+    }
+  } catch (error: any) {
+    console.error('Login error:', error.message);
+    throw error;
+  }
+};
+
+export const logoutRequest = async () => {
+  const response = await fetch(`${apiUrl}/logout/`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to logout');
+  }
 };
 
 export const registerRequest = async (
   username: string,
   password1: string,
-  password2: string
+  password2: string,
+  email: string
 ) => {
-  // Implement your register request logic
+  const response = await fetch(`${apiUrl}/register/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ username, password1, password2, email }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to register');
+  }
 };
 
 export const forgotPasswordRequest = async (username: string) => {

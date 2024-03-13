@@ -32,6 +32,7 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -39,7 +40,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'boppop',
-    'jazzmin',
     'corsheaders',
 ]
 
@@ -123,11 +123,11 @@ REST_FRAMEWORK = {
     ],
 }
 
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    "boppop.custom_auth_backend.CaseInsensitiveModelBackend",
-    'allauth.account.auth_backends.AuthenticationBackend',
-]
+# AUTHENTICATION_BACKENDS = [
+#     'django.contrib.auth.backends.ModelBackend',
+#     "boppop.custom_auth_backend.CaseInsensitiveModelBackend",
+#     'allauth.account.auth_backends.AuthenticationBackend',
+# ]
 
 SESSION_COOKIE_SAMESITE = None
 

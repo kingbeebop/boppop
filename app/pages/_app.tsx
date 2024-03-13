@@ -9,11 +9,11 @@ import '../styles/globals.css';
 const MyApp: React.FC<AppProps> = ({ Component, pageProps }) => {
   return (
     <Provider store={store}>
-      {/* <ErrorBoundary fallback={<p>We're currently experiencing a problem with our servers.</p>}> */}
+      <ErrorBoundary fallback={<p>We're currently experiencing a problem with our servers.</p>}>
         <Layout>
           <Component {...pageProps} />
         </Layout>
-      {/* </ErrorBoundary> */}
+      </ErrorBoundary>
     </Provider>
   );
 };

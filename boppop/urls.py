@@ -28,5 +28,8 @@ urlpatterns = [
         path('playlists/', playlist_list),
         path('playlists/<int:id>', playlist_detail),
         path('playlists/current', current_playlist),
+        path('login/', login_user),
+        path('logout/', logout_user),
+        path('register/', register_user)
     ])),
 ]
