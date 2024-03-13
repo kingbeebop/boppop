@@ -20,7 +20,7 @@ from .views import *
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include([  # Add 'api/' as the prefix for all paths
+    path('api/', include([
         path('songs/', song_list),
         path('songs/<int:id>', song_detail),
         path('artists/', artist_list),
