@@ -25,8 +25,13 @@ def logout_user(request):
 @api_view(['POST'])
 def register_user(request):
     username = request.data.get('username')
-    password = request.data.get('password')
+    password1 = request.data.get('password1')
+    password2 = request.data.get('password2')
     email = request.data.get('email')
+    if password1 != password2:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    else:
+        password = password1
     if not username or not password or not email:
         return Response({'error': 'Username, password, and email are required'}, status=status.HTTP_400_BAD_REQUEST)
     try:
