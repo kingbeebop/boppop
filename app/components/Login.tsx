@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { loginUser, logoutUser } from '../slices/authSlice';
 import { loginRequest } from '../utils/api';
 import { RootState } from '../store';
+import { useRouter } from 'next/router';
 
 const Login: React.FC = () => {
   const dispatch = useDispatch();
@@ -10,19 +11,7 @@ const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-
-  // const handleLogin = async () => {
-  //   try {
-  //     const response = await loginRequest(username, password);
-  //     dispatch(loginUser(response.user)); // Dispatch loginUser action with user data
-  //     // Login successful, redirect or perform additional actions here
-  //     console.log('Login successful');
-  //     console.log(response)
-  //   } catch (error) {
-  //     setError('Invalid username or password');
-  //     console.error('Login error:', error);
-  //   }
-  // };
+  const router = useRouter();
 
   const handleLogin = async () => {
     try {
@@ -49,6 +38,10 @@ const Login: React.FC = () => {
     if (e.key === 'Enter') {
       handleLogin();
     }
+  };
+
+  const handleRegisterClick = () => {
+    router.push('/register');
   };
 
   return (
@@ -88,7 +81,7 @@ const Login: React.FC = () => {
               Login
             </button>
             <div className="d-flex justify-content-between">
-              <button className="btn btn-secondary">Register</button>
+              <button className="btn btn-secondary" onClick={handleRegisterClick}>Register</button>
               <button className="btn btn-link">Forgot Password?</button>
             </div>
           </>
