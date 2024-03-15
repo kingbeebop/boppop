@@ -45,8 +45,8 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="mb-4">
-      <div className="bg-light p-4 rounded">
+    <div className="mb-4" style={{ backgroundColor: 'black', paddingLeft: '20px' }}> {/* Added inline style */}
+      <div className="bg-black p-4 rounded"> {/* Changed bg-light to bg-black */}
         {user ? (
           <>
             <div className="mb-3">Hello {user.username}!</div>
