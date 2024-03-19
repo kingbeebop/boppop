@@ -19,8 +19,8 @@ from django.urls import path, include
 from .views import *
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
     path('api/', include([
+        path('admin/', admin.site.urls),
         path('songs/', song_list),
         path('songs/<int:id>', song_detail),
         path('artists/', artist_list),

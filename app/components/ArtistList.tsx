@@ -1,4 +1,3 @@
-// components/ArtistList.tsx
 import React, { useState, useEffect } from 'react';
 import { fetchArtists } from '../utils/api';
 import ArtistCard from './ArtistCard';
@@ -8,17 +7,19 @@ const ArtistList: React.FC = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
 
-  const fetchArtistsData = async () => {
-    try {
-      const data = await fetchArtists(10, page, search);
-      setArtists(data.results);
-    } catch (error) {
-      console.error('Error fetching artists data:', error);
-    }
-  };
-
   useEffect(() => {
-    fetchArtistsData();
+    const fetchArtistsData = async () => {
+      try {
+        const data = await fetchArtists(10, page, search);
+        setArtists(data.results);
+      } catch (error) {
+        console.error('Error fetching artists data:', error);
+      }
+    };
+
+    fetchArtistsData(); // Invoke fetchArtistsData directly inside useEffect
+
+    // Include page and search in the dependency array
   }, [page, search]);
 
   const handleLoadMore = () => {

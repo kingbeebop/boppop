@@ -27,7 +27,9 @@ SECRET_KEY = 'django-insecure-i5nb7i4qcda62lh1+c@js)_6u+!e)!eo34ko_%u955)71-7jw6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ADMIN_URL = '/api/admin/'
+
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '167.172.251.135']
 
 # Application definition
 
@@ -136,7 +138,8 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Use the database for s
 SESSION_COOKIE_AGE = 1209600  # Set the session cookie age in seconds (e.g., 2 weeks)
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
+    'http://localhost:3000',
+    'http://167.172.251.135:3000',
 ]
 
 CORS_ALLOW_CREDENTIALS = True

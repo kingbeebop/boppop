@@ -1,4 +1,3 @@
-// components/About.tsx
 import React from 'react';
 
 const About: React.FC = () => {
@@ -13,7 +12,7 @@ const About: React.FC = () => {
       </p>
       <p>
         The purpose is to help remove ego from the artistic process, making it a regular thing.
-        It's a platform to push ourselves to improve, foster community, and share our creations with an audience.
+        It&apos;s a platform to push ourselves to improve, foster community, and share our creations with an audience.
         Creating art is more fulfilling when it reaches listeners, and through Bop Pop, we can support and suggest
         improvements for each other.
       </p>

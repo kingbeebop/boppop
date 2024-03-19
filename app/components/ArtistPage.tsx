@@ -1,8 +1,8 @@
-// components/ArtistPage.tsx
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { fetchArtist } from '../utils/api';
 import Playlist from './Playlist';
+import Image from 'next/image'; // Import Image from Next.js
 
 const ArtistPage: React.FC = () => {
   const router = useRouter();
@@ -31,7 +31,7 @@ const ArtistPage: React.FC = () => {
   return (
     <div>
       <h1>{artistData.name}</h1>
-      <img src={artistData.profile_pic} alt="Profile Pic" />
+      <Image src={artistData.profile_pic} alt="Profile Pic" width={300} height={300} /> {/* Updated to use Image */}
       <p>{artistData.bio}</p>
       <Playlist artistName={artistData.name} />
     </div>

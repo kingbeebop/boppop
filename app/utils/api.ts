@@ -1,5 +1,5 @@
 // api.ts
-const apiUrl = 'http://localhost:8000/api';
+const apiUrl = 'http://167.172.251.135/api';
 
 const baseFetch = async (url: string, options?: RequestInit) => {
   const response = await fetch(`${apiUrl}${url}`, {
@@ -91,7 +91,7 @@ export const fetchPlaylists = async (
   page: number = 1,
   search: string = ''
 ) => {
-  const apiUrl = 'http://localhost:8000/api'; // You can move this to a global config if needed
+  const apiUrl = 'http://167.172.251.135/api'; // You can move this to a global config if needed
   const url = `${apiUrl}/playlists/?limit=${limit}&page=${page}&search=${search}`;
 
   console.log('Fetching Playlists:', url);
@@ -121,7 +121,7 @@ export const fetchArtists = async (
   page: number = 1,
   search: string = ''
 ) => {
-  const apiUrl = 'http://localhost:8000/api'; // You can move this to a global config if needed
+  const apiUrl = 'http://167.172.251.135/api'; // You can move this to a global config if needed
   const url = `${apiUrl}/artists/?limit=${limit}&page=${page}&search=${search}`;
 
   console.log('Fetching Artists:', url);

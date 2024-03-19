@@ -1,4 +1,3 @@
-// components/Archive.tsx
 import React, { useState, useEffect } from 'react';
 import { fetchPlaylists } from '../utils/api';
 import PlaylistList from './PlaylistList';
@@ -8,18 +7,19 @@ const Archive: React.FC = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
 
-  const fetchPlaylistsData = async () => {
-    try {
-      const data = await fetchPlaylists(10, page, search);
-      setPlaylists(data.results);
-    } catch (error) {
-      console.error('Error fetching playlists data:', error);
-    }
-  };
-
   useEffect(() => {
-    fetchPlaylistsData();
-  }, [page, search]);
+    const fetchPlaylistsData = async () => {
+      try {
+        const data = await fetchPlaylists(10, page, search);
+        setPlaylists(data.results);
+      } catch (error) {
+        console.error('Error fetching playlists data:', error);
+      }
+    };
+
+    fetchPlaylistsData(); // Invoke fetchPlaylistsData directly inside useEffect
+
+  }, [page, search]); // Remove fetchPlaylistsData from the dependency array
 
   const handleLoadMore = () => {
     setPage((prevPage) => prevPage + 1);
