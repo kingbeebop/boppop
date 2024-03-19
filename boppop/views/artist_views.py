@@ -6,6 +6,21 @@ from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 
+@api_view(["GET"])
+def get_user_info(request):
+    if request.user.is_authenticated:
+        user_data = {
+            'id': request.user.id,
+            'username': request.user.username,
+            'email': request.user.email,
+            'artist_name': request.user.artist.name if hasattr(request.user, 'artist') else None,
+            'bio': request.user.artist.bio if hasattr(request.user, 'artist') else None,
+            'profile_pic': request.user.artist.profile_pic.url if hasattr(request.user, 'artist') and request.user.artist.profile_pic else None,
+        }
+        return Response(user_data)
+    else:
+        return Response({'error': 'User is not authenticated'}, status=status.HTTP_403_FORBIDDEN)
+    
 #/artists/
 @api_view(["GET", "POST"])
 def artist_list(request):

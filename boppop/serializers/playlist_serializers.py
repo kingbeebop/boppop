@@ -4,4 +4,4 @@ from boppop.models.playlist import Playlist
 class PlaylistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Playlist
-        fields = ['id', 'theme', 'date', 'contest']
+        fields = ['id', 'theme', 'date', 'contest', 'active']

@@ -1,4 +1,4 @@
-from boppop.models import Song, Playlist
+from boppop.models import Song, Playlist, Artist
 from boppop.serializers import SongSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -14,36 +14,45 @@ def song_list(request):
         return Response(serializer.data)
 
     elif request.method == "POST":
+        # Check if the user is authenticated (logged in)
+        if not request.user.is_authenticated:
+            return Response({'status': status.HTTP_403_FORBIDDEN, 'error': 'Login required for this action'})
+        else:
+            artist = Artist.objects.get(pk=request.user.id)
+
         # Check for required parameters in the request data
         if 'url' not in request.data or 'title' not in request.data:
             return Response({'status': status.HTTP_400_BAD_REQUEST, 'error': 'Missing required parameters'})
-
-        # Check if the logged-in user is an Artist
-        if not hasattr(request.user, 'artist'):
-            return Response({'status': status.HTTP_403_FORBIDDEN, 'error': 'Only artists can create songs'})
+        else:
+            title = request.data['title']
+            url = request.data['url']
 
         # Get the current week's playlist
-        current_playlist = Playlist.objects.order_by('-created_at').first()
+        current_playlist = Playlist.objects.get(active=True)
+
+        if not current_playlist:
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
         # Check if the artist has already submitted a song for the current playlist
-        existing_song = Song.objects.filter(artist=request.user.artist, playlist=current_playlist).first()
+        existing_song = Song.objects.filter(artist=artist, playlist=current_playlist).first()
 
         if existing_song:
             # Update existing song's title and url
-            existing_song.title = request.data['title']
-            existing_song.url = request.data['url']
+            existing_song.title = title
+            existing_song.url = url
             existing_song.save()
             serializer = SongSerializer(existing_song)
             return Response(serializer.data)
         else:
             # Create a new song object
-            data = {'url': request.data['url'], 'title': request.data['title'], 'artist': request.user.artist.id, 'playlist': current_playlist.id}
+            data = {'url': url, 'title': title, 'artist': artist.id, 'playlist': current_playlist.id}
             serializer = SongSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             else:
                 return Response({'status': status.HTTP_400_BAD_REQUEST, 'error': serializer.errors})
+            
 #/artists/id
 @api_view(["GET", "PUT", "DELETE"])
 def song_detail(request, id):

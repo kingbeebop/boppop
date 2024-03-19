@@ -14,4 +14,5 @@ all = [
     'playlist_list',
     'playlist_detail',
     'current_playlist',
+    'get_user_info',
 ]

@@ -30,6 +30,7 @@ urlpatterns = [
         path('playlists/current', current_playlist),
         path('login/', login_user),
         path('logout/', logout_user),
-        path('register/', register_user)
+        path('register/', register_user),
+        path('user/info', get_user_info),
     ])),
 ]

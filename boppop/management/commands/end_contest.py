@@ -9,7 +9,7 @@ class Command(BaseCommand):
         try:
             # Get the playlist in contest mode
             contest_playlist = Playlist.objects.get(contest=True)
-
+            
             # Create a hashmap of Song objects with their vote count
             song_vote_count = {}
             for song in contest_playlist.songs.all():
