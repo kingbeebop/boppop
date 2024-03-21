@@ -82,9 +82,31 @@ export const forgotPasswordRequest = async (username: string) => {
   // Implement your forgot password request logic
 };
 
-export const fetchPlaylist = async (playlistId: string) => {
-  return apiRequest(`/playlists/${playlistId}`);
+export const fetchPlaylist = async (playlistId: number) => {
+  const url = `${apiUrl}/playlists/${playlistId}`;
+  console.log('Fetching Playlist:', url);
+
+  try {
+    const response = await fetch(url, {
+      mode: 'cors',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      console.error('Error fetching playlist data:', response);
+      throw new Error(`Failed to fetch data from ${url}`);
+    }
+
+    const responseData = await response.json();
+    console.log('Response:', responseData);
+    return responseData;
+  } catch (error: any) {
+    console.error('Error fetching playlist data:', error.message);
+    throw error;
+  }
 };
+
+
 
 export const fetchPlaylists = async (
   limit: number = 10,

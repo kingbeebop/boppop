@@ -1,33 +1,20 @@
 import React from 'react';
-
-interface Song {
-  id: string;
-  name: string;
-  artist: string;
-}
+import { Song } from '../types'
 
 interface SongCardProps {
   song: Song;
-  onSelect: (song: Song) => void;
-  currentPlayingId?: string | null;
-  winner?: string;
+  onSelect: (song: Song) => void; // Ensure onSelect prop is correctly defined
 }
 
-const SongCard: React.FC<SongCardProps> = ({ song, onSelect, currentPlayingId, winner }) => {
+const SongCard: React.FC<SongCardProps> = ({ song, onSelect }) => {
   const handleClick = () => {
-    onSelect(song);
+    onSelect(song); // Use onSelect prop to handle song selection
   };
 
-  const isActiveSong = currentPlayingId === song.id;
-  const isWinningSong = winner === song.id;
-
   return (
-    <div
-      className={`${isActiveSong ? 'active-song' : ''} ${isWinningSong ? 'winning-song' : 'inactive-song'}`}
-      onClick={handleClick}
-    >
+    <div onClick={handleClick}>
       <div>
-        {song.name} by {song.artist}
+        {song.title} by {song.artist}
       </div>
     </div>
   );

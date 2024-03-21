@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginUser, logoutUser } from '../slices/authSlice';
+import { loginUser, logoutUser } from '../redux/slices/authSlice';
 import { loginRequest } from '../utils/api';
-import { RootState } from '../store';
+import { RootState } from '../redux/store';
 import { useRouter } from 'next/router';
 
 const Login: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<any>();
   const user = useSelector((state: RootState) => state.auth.user);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');

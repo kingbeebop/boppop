@@ -1,7 +1,7 @@
 // pages/_app.tsx
 import { AppProps } from 'next/app';
 import { Provider } from 'react-redux';
-import store from '../store';
+import store from '../redux/store';
 import Layout from '../components/Layout';
 import ErrorBoundary from '../components/ErrorBoundary'; // Import the ErrorBoundary component
 import '../styles/globals.css';

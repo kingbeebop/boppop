@@ -1,7 +1,7 @@
 // components/Sidebar.tsx
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { RootState } from '../store'; // Import the RootState type
+import { RootState } from '../redux/store'; // Import the RootState type
 
 import Login from './Login';
 

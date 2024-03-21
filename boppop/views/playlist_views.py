@@ -46,7 +46,7 @@ def playlist_detail(request, id):
 
     if request.method == "GET":
         serializer = PlaylistSerializer(playlist)
-        return Response(serializer)
+        return Response(serializer.data)
 
     elif request.method == "PUT":
 
