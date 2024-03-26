@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { fetchArtist } from '../utils/api';
+import { fetchArtistByName } from '../utils/api';
 // import Playlist from './Playlist';
 import Image from 'next/image'; // Import Image from Next.js
 
@@ -11,17 +11,17 @@ const ArtistPage: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const data = await fetchArtist(encodeURIComponent(name as string));
-        setArtistData(data);
-      } catch (error) {
-        console.error('Error fetching artist data:', error);
+      if (typeof name === 'string') {
+        try {
+          const data = await fetchArtistByName(name);
+          setArtistData(data);
+        } catch (error) {
+          console.error('Error fetching artist data:', error);
+        }
       }
     };
 
-    if (name) {
-      fetchData();
-    }
+    fetchData();
   }, [name]);
 
   if (!artistData) {

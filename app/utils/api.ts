@@ -138,12 +138,62 @@ export const fetchPlaylists = async (
   }
 };
 
+export const fetchArtist = async (artistId: number) => {
+  const url = `${apiUrl}/artists/${artistId}`;
+  console.log('Fetching Artist:', url);
+
+  try {
+    const response = await fetch(url, {
+      mode: 'cors',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      console.error('Error fetching playlist data:', response);
+      throw new Error(`Failed to fetch data from ${url}`);
+    }
+
+    const responseData = await response.json();
+    console.log('Response:', responseData);
+    return responseData;
+  } catch (error: any) {
+    console.error('Error fetching artist data:', error.message);
+    throw error;
+  }
+};
+
+export const fetchArtistByName = async (artistName: string) => {
+  const apiUrl = 'http://example.com/api'; // Replace with your actual API URL
+  const url = `${apiUrl}/artists?name=${encodeURIComponent(artistName)}`; // Encode artistName in the URL
+
+  console.log('Fetching Artist:', url);
+
+  try {
+    const response = await fetch(url, {
+      mode: 'cors',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      console.error('Error fetching artist data:', response);
+      throw new Error(`Failed to fetch data from ${url}`);
+    }
+
+    const responseData = await response.json();
+    console.log('Response:', responseData);
+    return responseData;
+  } catch (error: any) {
+    console.error('Error fetching artist data:', error.message);
+    throw error;
+  }
+};
+
+
 export const fetchArtists = async (
   limit: number = 10,
   page: number = 1,
   search: string = ''
 ) => {
-  const apiUrl = 'http://167.172.251.135/api'; // You can move this to a global config if needed
   const url = `${apiUrl}/artists/?limit=${limit}&page=${page}&search=${search}`;
 
   console.log('Fetching Artists:', url);
@@ -168,22 +218,33 @@ export const fetchArtists = async (
   }
 };
 
-
-export const fetchArtist = async (artistId: string) => {
-  return apiRequest(`/artists/${artistId}`);
-};
-
-export const fetchArtistSongs = async (artistName: string) => {
-  return apiRequest(`/artists/${encodeURIComponent(artistName)}/songs`);
-};
-
-export const fetchCurrentPlaylist = async () => {
-  return apiRequest('/playlists/current/');
-};
-
 export const fetchSubmission = async () => {
-  return apiRequest('/submission/');
-};
+  const url = `${apiUrl}/submission`;
+  console.log('Fetching Submission:', url);
+  try {
+    const response = await fetch(url, {
+      mode: 'cors', // Add this line
+      credentials: 'include',
+    });
+
+    if (response.status === 204) {
+      console.log('No submission found');
+      return null; // Indicate that there's no result
+    }
+
+    if (!response.ok) {
+      console.error('Error fetching submission data:', response);
+      throw new Error(`Failed to fetch data from ${url}`);
+    }
+
+    const responseData = await response.json();
+    console.log('Response:', responseData); // Log the response for inspection
+    return responseData;
+  } catch (error: any) {
+    console.error('Error fetching submission data:', error.message);
+    throw error;
+  }
+}
 
 interface SubmissionData {
   url: string;
@@ -191,7 +252,7 @@ interface SubmissionData {
 }
 
 export const submitOrUpdateSubmission = async (data: SubmissionData) => {
-  const response = await fetch(`${apiUrl}/submit/`, {
+  const response = await fetch(`${apiUrl}/songs/`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -206,9 +267,29 @@ export const submitOrUpdateSubmission = async (data: SubmissionData) => {
   return response.json();
 };
 
-export const fetchContestPlaylist = async () => {
-  return apiRequest('/playlists/current/id');
-};
+export const fetchChallengeData = async () => {
+  const url = `${apiUrl}/challenge`;
+  console.log('Fetching Challenge:', url);
+
+  try {
+    const response = await fetch(url, {
+      mode: 'cors',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      console.error('Error fetching challenge data:', response);
+      throw new Error(`Failed to fetch data from ${url}`);
+    }
+
+    const responseData = await response.json();
+    console.log('Response:', responseData);
+    return responseData;
+  } catch (error: any) {
+    console.error('Error fetching challenget data:', error.message);
+    throw error;
+  }
+}
 
 interface VoteReviewData {
   id: string;

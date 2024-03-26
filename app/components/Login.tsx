@@ -4,6 +4,8 @@ import { loginUser, logoutUser } from '../redux/slices/authSlice';
 import { loginRequest } from '../utils/api';
 import { RootState } from '../redux/store';
 import { useRouter } from 'next/router';
+import Modal from 'react-bootstrap/Modal';
+import Button from 'react-bootstrap/Button';
 
 const Login: React.FC = () => {
   const dispatch = useDispatch<any>();
@@ -11,13 +13,17 @@ const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showModal, setShowModal] = useState(false);
   const router = useRouter();
+
+  const handleClose = () => setShowModal(false);
+  const handleShow = () => setShowModal(true);
 
   const handleLogin = async () => {
     try {
       const response = await loginRequest(username, password);
       dispatch(loginUser({ username: response.username, password: response.password }));
-      // Login successful, redirect or perform additional actions here
+      handleClose(); // Close the modal after successful login
       console.log('Login successful');
       console.log(response);
     } catch (error) {
@@ -25,12 +31,9 @@ const Login: React.FC = () => {
       console.error('Login error:', error);
     }
   };
-  
 
   const handleLogout = () => {
     dispatch(logoutUser());
-    // Get the history object
-
     console.log('Logout successful');
   };
 
@@ -41,53 +44,61 @@ const Login: React.FC = () => {
   };
 
   const handleRegisterClick = () => {
+    handleClose();
     router.push('/register');
   };
 
   return (
-    <div className="mb-4" style={{ backgroundColor: 'black', paddingLeft: '20px' }}> {/* Added inline style */}
-      <div className="bg-black p-4 rounded"> {/* Changed bg-light to bg-black */}
-        {user ? (
-          <>
-            <div className="mb-3">Hello {user.username}!</div>
-            <button className="btn btn-primary mb-3" onClick={handleLogout}>
-              Logout
-            </button>
-          </>
-        ) : (
-          <>
-            <div className="mb-3">
-              <input
-                type="text"
-                placeholder="Username"
-                className="form-control"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                onKeyDown={handleKeyDown}
-              />
-            </div>
-            <div className="mb-3">
-              <input
-                type="password"
-                placeholder="Password"
-                className="form-control"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={handleKeyDown}
-              />
-            </div>
-            {error && <div className="text-danger mb-3">{error}</div>}
-            <button className="btn btn-primary mb-3" onClick={handleLogin}>
-              Login
-            </button>
-            <div className="d-flex justify-content-between">
-              <button className="btn btn-secondary" onClick={handleRegisterClick}>Register</button>
-              <button className="btn btn-link">Forgot Password?</button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+    <>
+      <Button variant="primary" onClick={handleShow}>
+        Login
+      </Button>
+
+      <Modal show={showModal} onHide={handleClose} centered>
+        <Modal.Header closeButton className="bg-black">
+          <Modal.Title>Login</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="bg-black rounded-lg p-4">
+          <div className="mb-3 border-white border rounded">
+            <input
+              type="text"
+              placeholder="Username"
+              className="form-control bg-black text-white"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+          </div>
+          <div className="mb-3 border-white border rounded">
+            <input
+              type="password"
+              placeholder="Password"
+              className="form-control bg-black text-white"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+          </div>
+          {error && <div className="text-danger mb-3">{error}</div>}
+          <Button variant="primary" onClick={handleLogin}>
+            Login
+          </Button>
+          <div className="flex justify-between">
+            <Button variant="secondary" onClick={handleRegisterClick}>Register</Button>
+            <Button variant="link">Forgot Password?</Button>
+          </div>
+        </Modal.Body>
+      </Modal>
+
+      {user ? (
+        <>
+          <div className="mb-3">Hello {user.username}!</div>
+          <Button variant="primary" onClick={handleLogout}>
+            Logout
+          </Button>
+        </>
+      ) : null}
+    </>
   );
 };
 

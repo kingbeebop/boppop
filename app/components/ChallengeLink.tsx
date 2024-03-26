@@ -1,21 +1,32 @@
-// components/ChallengeLink.tsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
+import Countdown from './Countdown';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '../redux/store';
+import { fetchChallenge, selectChallenge } from '../redux/slices/challengeSlice'; // Import fetchChallenge and selectChallenge from challengeSlice
 
-interface ChallengeLinkProps {
-  theme: string | null;
-}
+const ChallengeLink: React.FC = () => {
+  const { theme, contest } = useSelector(selectChallenge); // Get theme and contest from challengeSlice
+  const dispatch = useDispatch<any>();
 
-const ChallengeLink: React.FC<ChallengeLinkProps> = ({ theme }) => {
+  useEffect(() => {
+    dispatch(fetchChallenge());
+  }, [dispatch]);
+
   return (
     <div>
-      {theme ? (
+      {contest ? (
+        <Link href="/vote">
+          <a className="underline">Vote or Die</a>
+        </Link>
+      ) : theme ? (
         <Link href="/challenge">
-          <a className="underline">Current theme: {theme}</a>
+          <a className="underline">Current Theme: {theme}</a>
         </Link>
       ) : (
         <span>No current theme</span>
       )}
+      <Countdown />
     </div>
   );
 };

@@ -28,12 +28,12 @@ const RegistrationForm: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) =>
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="bg-black p-4 rounded">
       <div className="mb-3">
         <input
           type="text"
           placeholder="Username"
-          className="form-control"
+          className="form-control bg-black text-white"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
@@ -43,7 +43,7 @@ const RegistrationForm: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) =>
         <input
           type="password"
           placeholder="Password"
-          className="form-control"
+          className="form-control bg-black text-white"
           value={password1}
           onChange={(e) => setPassword1(e.target.value)}
           required
@@ -53,7 +53,7 @@ const RegistrationForm: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) =>
         <input
           type="password"
           placeholder="Confirm Password"
-          className="form-control"
+          className="form-control bg-black text-white"
           value={password2}
           onChange={(e) => setPassword2(e.target.value)}
           required
@@ -63,7 +63,7 @@ const RegistrationForm: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) =>
         <input
           type="email"
           placeholder="Email"
-          className="form-control"
+          className="form-control bg-black text-white"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required

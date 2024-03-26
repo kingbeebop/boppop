@@ -1,49 +1,91 @@
 import React, { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../redux/store';
+import { submitSubmission } from '../redux/slices/submissionSlice'; // Import submitOrUpdateSubmission from submissionSlice
 
-interface SubmissionFormProps {
-  submitOrUpdateSubmission: (newData: any) => Promise<void>; // Update with actual type
-  initialData: { title: string; soundcloudUrl: string };
-}
+const SubmissionForm: React.FC = () => {
+  const dispatch = useDispatch<any>();
+  const [formData, setFormData] = useState({ title: '', url: '' });
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [submissionSuccess, setSubmissionSuccess] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
-const SubmissionForm: React.FC<SubmissionFormProps> = ({ submitOrUpdateSubmission, initialData }) => {
-  const [title, setTitle] = useState<string>(initialData.title);
-  const [soundcloudUrl, setSoundcloudUrl] = useState<string>(initialData.soundcloudUrl);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate the URL structure and include 'soundcloud.com'
-    const urlRegex = /^https?:\/\/(soundcloud\.com\/\S+)$/i;
-    if (!urlRegex.test(soundcloudUrl)) {
-      // Handle invalid URL, show error message, etc.
-      console.error('Invalid Soundcloud URL');
+    // Check if title is empty
+    if (!formData.title) {
+      setErrorMessage('Title is required');
       return;
     }
 
+    // Validate the URL structure and include 'soundcloud.com'
+    const urlRegex = /^https?:\/\/(soundcloud\.com\/\S+)$/i;
+    if (!urlRegex.test(formData.url)) {
+      // Handle invalid URL, show error message, etc.
+      setErrorMessage('Invalid Soundcloud URL');
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      await submitOrUpdateSubmission({ title, soundcloudUrl });
-      // Optionally reset form fields or perform other actions after submission
-      // setTitle('');
-      // setSoundcloudUrl('');
+      await dispatch(submitSubmission(formData)); // Dispatch submitOrUpdateSubmission action
+      setSubmissionSuccess(true);
     } catch (error) {
       console.error('Error submitting or updating submission:', error);
+      setErrorMessage('Error submitting or updating submission');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <label>
-        Title:
-        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
-      </label>
-      <br />
-      <label>
-        Soundcloud URL:
-        <input type="text" value={soundcloudUrl} onChange={(e) => setSoundcloudUrl(e.target.value)} />
-      </label>
-      <br />
-      <button type="submit">Submit</button>
-    </form>
+    <div>
+      {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
+      {!submissionSuccess ? (
+        <form onSubmit={handleSubmit}>
+          <label>
+            Title:
+            <input
+              type="text"
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              style={{ backgroundColor: 'black', color: 'white' }}
+            />
+          </label>
+          <br />
+          <label>
+            Soundcloud URL:
+            <input
+              type="text"
+              name="url"
+              value={formData.url}
+              onChange={handleChange}
+              style={{ backgroundColor: 'black', color: 'white' }}
+            />
+          </label>
+          <br />
+          <button type="submit" disabled={isSubmitting}>
+            Submit
+          </button>
+        </form>
+      ) : (
+        <div>
+          <p>Submission successful!</p>
+          {/* Optionally add more content or actions after successful submission */}
+        </div>
+      )}
+    </div>
   );
 };
 

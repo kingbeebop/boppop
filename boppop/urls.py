@@ -21,6 +21,8 @@ from .views import *
 urlpatterns = [
     path('api/', include([
         path('admin/', admin.site.urls),
+        path('challenge', get_challenge),
+        path('submission', get_submission),
         path('songs/', song_list),
         path('songs/<int:id>', song_detail),
         path('artists/', artist_list),

@@ -1,20 +1,6 @@
-/* @import 'bootstrap/dist/css/bootstrap.min.css';
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
-
-body {
-  background-color: black;
-  color: white;
-} */
-
 @import 'bootstrap/dist/css/bootstrap.min.css';
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
 
 /* Your custom styles go here */
-
 body {
   background-color: black;
   color: white;
@@ -31,3 +17,8 @@ aside {
   flex-shrink: 0; /* Prevent sidebar from growing */
   width: 25%; /* Set the desired width for the sidebar */
 }
+
+/* Import Tailwind CSS after custom styles */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';

@@ -3,7 +3,7 @@ from boppop.serializers import SongSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-
+from django.contrib.auth.decorators import login_required
 
 #/songs/
 @api_view(["GET", "POST"])
@@ -79,3 +79,24 @@ def song_detail(request, id):
     elif request.method == "DELETE":
         song.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+@api_view(["GET"])
+@login_required
+def get_submission(request):
+    # Check if the user is logged in
+    if not request.user.is_authenticated:
+        return Response({'status': status.HTTP_403_FORBIDDEN, 'error': 'Login required for this action'}, status=status.HTTP_403_FORBIDDEN)
+
+    # Get the current active playlist
+    try:
+        current_playlist = Playlist.objects.get(active=True)
+    except Playlist.DoesNotExist:
+        return Response({'status': status.HTTP_404_NOT_FOUND, 'error': 'No active playlist found'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Check if the user has submitted a song for the current playlist
+    try:
+        submission = Song.objects.get(artist=request.user, playlist=current_playlist)
+        serializer = SongSerializer(submission)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Song.DoesNotExist:
+        return Response({'status': status.HTTP_404_NOT_FOUND, 'message': 'No submission found for the current playlist'}, status=status.HTTP_404_NOT_FOUND)

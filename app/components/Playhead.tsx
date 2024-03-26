@@ -1,7 +1,8 @@
 import React from 'react';
+import { Song } from '../types';
 
 interface PlayheadProps {
-  song: { id: string; url: string };
+  song: Song;
   autoplay?: boolean;
 }
 

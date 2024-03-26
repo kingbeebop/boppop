@@ -2,6 +2,7 @@ from .artist_views import *
 from .playlist_views import *
 from .song_views import *
 from .authentication_views import *
+from .challenge_views import *
 
 all = [
     'login_user',
@@ -15,4 +16,6 @@ all = [
     'playlist_detail',
     'current_playlist',
     'get_user_info',
+    'get_challenge',
+    'get_submission',
 ]
