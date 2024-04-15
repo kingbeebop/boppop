@@ -1,28 +1,31 @@
 from boppop.models import Artist
 from boppop.serializers import ArtistSerializer
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
+from rest_framework.permissions import IsAuthenticated
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_user_info(request):
-    if request.user.is_authenticated:
-        user_data = {
-            'id': request.user.id,
-            'username': request.user.username,
-            'email': request.user.email,
-            'artist_name': request.user.artist.name if hasattr(request.user, 'artist') else None,
-            'bio': request.user.artist.bio if hasattr(request.user, 'artist') else None,
-            'profile_pic': request.user.artist.profile_pic.url if hasattr(request.user, 'artist') and request.user.artist.profile_pic else None,
-        }
-        return Response(user_data)
-    else:
-        return Response({'error': 'User is not authenticated'}, status=status.HTTP_403_FORBIDDEN)
-    
+    user = request.user
+    user_data = {
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'artist_name': user.artist.name if hasattr(user, 'artist') else None,
+        'bio': user.artist.bio if hasattr(user, 'artist') else None,
+        'profile_pic': user.artist.profile_pic.url if hasattr(user, 'artist') and user.artist.profile_pic else None,
+    }
+    return Response(user_data)
+
 #/artists/
 @api_view(["GET", "POST"])
+@authentication_classes([])
+@permission_classes([AllowAny])
 def artist_list(request):
     if request.method == "GET":
         # Get query parameters for pagination and search
@@ -54,6 +57,8 @@ def artist_list(request):
         
 #/artists/id
 @api_view(["GET", "PUT", "DELETE"])
+@authentication_classes([])
+@permission_classes([AllowAny])
 def artist_detail(request, id):
 
     try:
@@ -63,9 +68,7 @@ def artist_detail(request, id):
 
     if request.method == "GET":
         serializer = ArtistSerializer(artist)
-        return Response(
-            {"inbox_artist": serializer.data, "token": artist.client.token}
-        )
+        return Response(serializer.data)
 
     elif request.method == "PUT":
 

@@ -1,51 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import { fetchArtists } from '../utils/api';
+// components/ArtistList.tsx
+
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../redux/store';
+import { fetchArtistsAsync } from '../redux/slices/artistSlice';
 import ArtistCard from './ArtistCard';
+import { Artist } from '../types';
 
 const ArtistList: React.FC = () => {
-  const [artists, setArtists] = useState<{ id: string; username: string }[]>([]);
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
+  const dispatch = useDispatch<any>();
+  const { artists, loading, error, currentPage, limit, search } = useSelector(
+    (state: RootState) => state.artist
+  );
 
   useEffect(() => {
-    const fetchArtistsData = async () => {
-      try {
-        const data = await fetchArtists(10, page, search);
-        setArtists(data.results);
-      } catch (error) {
-        console.error('Error fetching artists data:', error);
-      }
-    };
-
-    fetchArtistsData(); // Invoke fetchArtistsData directly inside useEffect
-
-    // Include page and search in the dependency array
-  }, [page, search]);
-
-  const handleLoadMore = () => {
-    setPage((prevPage) => prevPage + 1);
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-    setPage(1); // Reset page when the search term changes
-  };
+    dispatch(fetchArtistsAsync({ limit, page: currentPage, search }));
+    console.log(artists)
+  }, [dispatch, currentPage, limit, search]);
 
   return (
     <div>
       <h1>Artists</h1>
-      <input
-        type="text"
-        placeholder="Search by Name"
-        value={search}
-        onChange={handleSearchChange}
-      />
-      <div>
-        {artists.map((artist) => (
-          <ArtistCard key={artist.id} id={artist.id} name={artist.username} />
-        ))}
-      </div>
-      <button onClick={handleLoadMore}>Load More</button>
+      {loading ? (
+        <div>Loading...</div>
+      ) : error ? (
+        <div>Error: {error}</div>
+      ) : (
+        <div>
+          {artists.map((artist: Artist) => (
+            <ArtistCard key={artist.id} artist={artist} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

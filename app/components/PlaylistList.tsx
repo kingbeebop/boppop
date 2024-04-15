@@ -1,16 +1,13 @@
 // components/PlaylistList.tsx
 import React from 'react';
 import PlaylistCard from './PlaylistCard';
+import { Playlist } from '../types';
 
-interface PlaylistListProps {
-  playlists: { id: string; theme: string }[];
-}
-
-const PlaylistList: React.FC<PlaylistListProps> = ({ playlists }) => {
+const PlaylistList: React.FC<{ playlists: Playlist[] }> = ({ playlists }) => {
   return (
     <div>
       {playlists.map((playlist) => (
-        <PlaylistCard key={playlist.id} id={playlist.id} theme={playlist.theme} />
+        <PlaylistCard key={playlist.id} playlist={playlist} />
       ))}
     </div>
   );

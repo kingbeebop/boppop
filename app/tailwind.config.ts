@@ -1,34 +1,43 @@
-import type { Config } from 'tailwindcss';
+// tailwind.config.js
 
-const config: Config = {
-  content: [
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
-  theme: {
-    extend: {
-      screens: {
-        'sm': '640px',
-        'md': '768px', // Adjusted md breakpoint
-        'lg': '1024px',
-        'xl': '1280px',
-      },
-      maxWidth: {
-        'xs': '20rem', // 320px
-        'sm': '24rem', // 384px
-        'md': '28rem', // 448px
-        'lg': '32rem', // 512px
-        'xl': '36rem', // 576px
-        '2xl': '42rem', // 672px
-        '3xl': '48rem', // 768px
-        '4xl': '56rem', // 896px
-        '5xl': '64rem', // 1024px
-        '6xl': '72rem', // 1152px
-      },
-    },
-  },
-  plugins: [],
-};
-
-export default config;
+// module.exports = {
+//   content: [
+//     './src/**/*.{js,ts,jsx,tsx}',
+//     './public/index.html',
+//   ],
+//   theme: {
+//     extend: {
+//       screens: {
+//         'sm': '640px',
+//         'md': '768px',
+//         'lg': '1024px',
+//         'xl': '1280px',
+//       },
+//       colors: {
+//         black: '#000000', // Set black color
+//       },
+//       fontFamily: {
+//         sans: ['Helvetica', 'Arial', 'sans-serif'], // Define default sans-serif font
+//       },
+//       fontSize: {
+//         'xs': '0.75rem', // Extra small font size
+//         'sm': '0.875rem', // Small font size
+//         'base': '1rem', // Base font size
+//         'lg': '1.125rem', // Large font size
+//         'xl': '1.25rem', // Extra large font size
+//         '2xl': '1.5rem', // 2x large font size
+//       },
+//       fontWeight: {
+//         'normal': 400, // Normal font weight
+//         'bold': 700, // Bold font weight
+//       },
+//       backgroundColor: theme => ({
+//         ...theme('colors'),
+//         'primary': '#3490dc', // Primary background color
+//         'secondary': '#ffed4a', // Secondary background color
+//         'black': '#000000', // Black background color
+//       }),
+//     },
+//   },
+//   plugins: [],
+// };

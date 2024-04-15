@@ -10,7 +10,7 @@ const Playhead: React.FC<PlayheadProps> = ({ song, autoplay = true }) => {
   return (
     <div className="playhead">
       <iframe
-        title={song.id}
+        title={song.title}
         width="100%"
         height="166"
         scrolling="no"

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
-import Playhead from './Playhead'; // Assuming correct import path for Playhead component
+import Playhead from './Playhead';
 
 const Footer: React.FC = () => {
   const selectedSong = useSelector((state: RootState) => state.song.selectedSong);

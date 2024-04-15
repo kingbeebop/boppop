@@ -1,33 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { fetchPlaylists } from '../utils/api';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../redux/store';
+import { fetchPlaylistsAsync, selectPlaylists } from '../redux/slices/playlistSlice';
 import PlaylistList from './PlaylistList';
+import { Playlist } from '../types';
 
 const Archive: React.FC = () => {
-  const [playlists, setPlaylists] = useState<{ id: string; theme: string }[]>([]);
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
+  const dispatch = useDispatch<any>();
+  const { playlists, loading, error, currentPage, limit, search, count } = useSelector(selectPlaylists);
+  const [searchTerm, setSearchTerm] = useState('');
+  const totalPages = Math.ceil(count / limit);
 
   useEffect(() => {
-    const fetchPlaylistsData = async () => {
-      try {
-        const data = await fetchPlaylists(10, page, search);
-        setPlaylists(data.results);
-      } catch (error) {
-        console.error('Error fetching playlists data:', error);
-      }
-    };
-
-    fetchPlaylistsData(); // Invoke fetchPlaylistsData directly inside useEffect
-
-  }, [page, search]); // Remove fetchPlaylistsData from the dependency array
+    dispatch(fetchPlaylistsAsync({ limit, page: 1, search }));
+  }, [dispatch, limit, search]);
 
   const handleLoadMore = () => {
-    setPage((prevPage) => prevPage + 1);
+    if (currentPage < totalPages) {
+      dispatch(fetchPlaylistsAsync({ limit, page: currentPage + 1, search }));
+    }
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-    setPage(1); // Reset page when the search term changes
+    setSearchTerm(e.target.value);
+  };
+
+  const handleSearchSubmit = () => {
+    dispatch(fetchPlaylistsAsync({ limit, page: 1, search: searchTerm }));
   };
 
   return (
@@ -36,11 +35,22 @@ const Archive: React.FC = () => {
       <input
         type="text"
         placeholder="Search by ID or Theme"
-        value={search}
+        value={searchTerm}
         onChange={handleSearchChange}
       />
-      <PlaylistList playlists={playlists} />
-      <button onClick={handleLoadMore}>Load More</button>
+      <button onClick={handleSearchSubmit}>Search</button>
+      {loading ? (
+        <div>Loading...</div>
+      ) : error ? (
+        <div>Error: {error}</div>
+      ) : (
+        <React.Fragment>
+          <PlaylistList playlists={playlists} />
+          {currentPage < totalPages && (
+            <button onClick={handleLoadMore}>Load More</button>
+          )}
+        </React.Fragment>
+      )}
     </div>
   );
 };

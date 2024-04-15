@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginUser, logoutUser } from '../redux/slices/authSlice';
-import { loginRequest } from '../utils/api';
+import { loginUser, logoutUser, checkAuthStatus } from '../redux/slices/authSlice';
 import { RootState } from '../redux/store';
 import { useRouter } from 'next/router';
 import Modal from 'react-bootstrap/Modal';
@@ -16,16 +15,23 @@ const Login: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const router = useRouter();
 
+  // Run the checkAuthStatus action on initial load if user is null
+  useEffect(() => {
+    if (!user) {
+      console.log("Hello!")
+      dispatch(checkAuthStatus());
+    }
+  }, [dispatch, user]);
+
+
   const handleClose = () => setShowModal(false);
   const handleShow = () => setShowModal(true);
 
-  const handleLogin = async () => {
+  const handleLogin = () => {
     try {
-      const response = await loginRequest(username, password);
-      dispatch(loginUser({ username: response.username, password: response.password }));
-      handleClose(); // Close the modal after successful login
+      dispatch(loginUser({ username, password }));
+      handleClose(); // Close the modal after dispatching loginUser
       console.log('Login successful');
-      console.log(response);
     } catch (error) {
       setError('Invalid username or password');
       console.error('Login error:', error);
@@ -50,9 +56,11 @@ const Login: React.FC = () => {
 
   return (
     <>
-      <Button variant="primary" onClick={handleShow}>
-        Login
-      </Button>
+      {!user && (
+        <Button variant="primary" onClick={handleShow}>
+          Login
+        </Button>
+      )}
 
       <Modal show={showModal} onHide={handleClose} centered>
         <Modal.Header closeButton className="bg-black">
@@ -90,14 +98,14 @@ const Login: React.FC = () => {
         </Modal.Body>
       </Modal>
 
-      {user ? (
-        <>
-          <div className="mb-3">Hello {user.username}!</div>
+      {user && (
+        <div className="flex items-row justify-end mb-3">
+          <div className="mr-3">Hello {user.username}!</div>
           <Button variant="primary" onClick={handleLogout}>
             Logout
           </Button>
-        </>
-      ) : null}
+        </div>
+      )}
     </>
   );
 };

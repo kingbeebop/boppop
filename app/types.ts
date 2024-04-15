@@ -1,5 +1,5 @@
 export interface Song {
-  id: string;
+  id: number;
   title: string;
   url: string;
   artist: string;
@@ -7,7 +7,8 @@ export interface Song {
 
 export interface Artist {
   id: number;
-  name: string;
+  username: string;
+  name: string | null;
   bio: string | null;
   profile_pic: string | null;
 }
@@ -21,4 +22,25 @@ export interface Playlist {
   contest: boolean;
   winner: Song | null;
   songs: Song[];
+}
+
+export interface LoginData {
+  username: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  refresh_token: string;
+  user: Artist;
+}
+
+export interface SubmissionData {
+  url: string;
+  title: string;
+}
+
+export interface Ballot {
+  songId: number | null;
+  comments: string;
 }

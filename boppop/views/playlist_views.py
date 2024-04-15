@@ -1,6 +1,7 @@
 from boppop.models import Playlist
 from boppop.serializers import PlaylistSerializer
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.http import JsonResponse
 from rest_framework import status
@@ -9,6 +10,8 @@ from rest_framework.pagination import PageNumberPagination
 
 #/playlists/
 @api_view(["GET", "POST"])
+@authentication_classes([])
+@permission_classes([AllowAny])
 def playlist_list(request):
     # Pagination
     paginator = PageNumberPagination()
@@ -37,6 +40,8 @@ def playlist_list(request):
         
 #/playlists/id
 @api_view(["GET", "PUT", "DELETE"])
+@authentication_classes([])
+@permission_classes([AllowAny])
 def playlist_detail(request, id):
 
     try:
@@ -62,6 +67,8 @@ def playlist_detail(request, id):
     
 #/playlists/current
 @api_view(["GET"])
+@authentication_classes([])
+@permission_classes([AllowAny])
 def current_playlist(request):
     try:
         playlist = Playlist.objects.get(active=True)

@@ -1,63 +1,51 @@
-// api.ts
-const apiUrl = 'http://167.172.251.135/api';
+import { apiUrl } from './config';
+import { refreshToken, getRefreshToken } from './auth';
+import { SubmissionData, Ballot } from '../types'
+import { Playlist } from '../types';
 
 const baseFetch = async (url: string, options?: RequestInit) => {
   const response = await fetch(`${apiUrl}${url}`, {
     mode: 'cors',
-    credentials: 'include',
     ...options,
   });
 
   if (!response.ok) {
-    console.log(response)
+    console.log(response);
     throw new Error(`Failed to fetch data from ${url}`);
   }
 
   return response.json();
 };
 
-const apiRequest = async (url: string) => {
-  const response = await baseFetch(url);
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch data from ${url}`);
-  }
-
-  return response.json();
-};
-
-export const loginRequest = async (username: string, password: string) => {
+const fetchProtectedData = async (url: string, options?: RequestInit) => {
   try {
-    const response = await fetch(`${apiUrl}/login/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username, password }),
-    });
+    const response = await baseFetch(url, options);
 
-    if (response.ok) {
-      const data = await response.json();
-      return data; // Return response data if needed
-    } else {
-      throw new Error('Invalid credentials');
+    if (!response.ok && response.status === 401) {
+      const refreshTokenValue = getRefreshToken();
+      if (refreshTokenValue) {
+        const refreshTokenResponse = await refreshToken(refreshTokenValue);
+        const newAccessToken = refreshTokenResponse.access_token;
+        const newOptions = {
+          ...options,
+          headers: {
+            ...options?.headers,
+            Authorization: `Bearer ${newAccessToken}`,
+          },
+        };
+        return await baseFetch(url, newOptions);
+      } else {
+        throw new Error('Refresh token not available');
+      }
     }
+
+    return response;
   } catch (error: any) {
-    console.error('Login error:', error.message);
+    console.error('Error fetching protected data:', error.message);
     throw error;
   }
 };
 
-export const logoutRequest = async () => {
-  const response = await fetch(`${apiUrl}/logout/`, {
-    method: 'POST',
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to logout');
-  }
-};
 
 export const registerRequest = async (
   username: string,
@@ -65,17 +53,14 @@ export const registerRequest = async (
   password2: string,
   email: string
 ) => {
-  const response = await fetch(`${apiUrl}/register/`, {
+  const data = { username, password1, password2, email };
+  return await baseFetch('/register/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ username, password1, password2, email }),
+    body: JSON.stringify(data),
   });
-
-  if (!response.ok) {
-    throw new Error('Failed to register');
-  }
 };
 
 export const forgotPasswordRequest = async (username: string) => {
@@ -83,231 +68,70 @@ export const forgotPasswordRequest = async (username: string) => {
 };
 
 export const fetchPlaylist = async (playlistId: number) => {
-  const url = `${apiUrl}/playlists/${playlistId}`;
-  console.log('Fetching Playlist:', url);
-
-  try {
-    const response = await fetch(url, {
-      mode: 'cors',
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      console.error('Error fetching playlist data:', response);
-      throw new Error(`Failed to fetch data from ${url}`);
-    }
-
-    const responseData = await response.json();
-    console.log('Response:', responseData);
-    return responseData;
-  } catch (error: any) {
-    console.error('Error fetching playlist data:', error.message);
-    throw error;
-  }
+  return await baseFetch(`/playlists/${playlistId}`);
 };
-
-
 
 export const fetchPlaylists = async (
   limit: number = 10,
   page: number = 1,
   search: string = ''
 ) => {
-  const apiUrl = 'http://167.172.251.135/api'; // You can move this to a global config if needed
-  const url = `${apiUrl}/playlists/?limit=${limit}&page=${page}&search=${search}`;
-
-  console.log('Fetching Playlists:', url);
-
-  try {
-    const response = await fetch(url, {
-      mode: 'cors', // Add this line
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      console.error('Error fetching playlists data:', response);
-      throw new Error(`Failed to fetch data from ${url}`);
-    }
-
-    const responseData = await response.json();
-    console.log('Response:', responseData); // Log the response for inspection
-    return responseData;
-  } catch (error: any) {
-    console.error('Error fetching playlists data:', error.message);
-    throw error;
-  }
+  const url = `/playlists/?limit=${limit}&page=${page}&search=${search}`;
+  return await baseFetch(url);
 };
 
 export const fetchArtist = async (artistId: number) => {
-  const url = `${apiUrl}/artists/${artistId}`;
-  console.log('Fetching Artist:', url);
-
-  try {
-    const response = await fetch(url, {
-      mode: 'cors',
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      console.error('Error fetching playlist data:', response);
-      throw new Error(`Failed to fetch data from ${url}`);
-    }
-
-    const responseData = await response.json();
-    console.log('Response:', responseData);
-    return responseData;
-  } catch (error: any) {
-    console.error('Error fetching artist data:', error.message);
-    throw error;
-  }
+  return await baseFetch(`/artists/${artistId}`);
 };
 
 export const fetchArtistByName = async (artistName: string) => {
-  const apiUrl = 'http://example.com/api'; // Replace with your actual API URL
-  const url = `${apiUrl}/artists?name=${encodeURIComponent(artistName)}`; // Encode artistName in the URL
-
-  console.log('Fetching Artist:', url);
-
-  try {
-    const response = await fetch(url, {
-      mode: 'cors',
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      console.error('Error fetching artist data:', response);
-      throw new Error(`Failed to fetch data from ${url}`);
-    }
-
-    const responseData = await response.json();
-    console.log('Response:', responseData);
-    return responseData;
-  } catch (error: any) {
-    console.error('Error fetching artist data:', error.message);
-    throw error;
-  }
+  const url = `/artists?name=${encodeURIComponent(artistName)}`;
+  return await baseFetch(url);
 };
-
 
 export const fetchArtists = async (
   limit: number = 10,
   page: number = 1,
   search: string = ''
 ) => {
-  const url = `${apiUrl}/artists/?limit=${limit}&page=${page}&search=${search}`;
-
-  console.log('Fetching Artists:', url);
-
-  try {
-    const response = await fetch(url, {
-      mode: 'cors', // Add this line
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      console.error('Error fetching artists data:', response);
-      throw new Error(`Failed to fetch data from ${url}`);
-    }
-
-    const responseData = await response.json();
-    console.log('Response:', responseData); // Log the response for inspection
-    return responseData;
-  } catch (error: any) {
-    console.error('Error fetching artists data:', error.message);
-    throw error;
-  }
+  const url = `/artists/?limit=${limit}&page=${page}&search=${search}`;
+  return await baseFetch(url);
 };
 
 export const fetchSubmission = async () => {
-  const url = `${apiUrl}/submission`;
-  console.log('Fetching Submission:', url);
-  try {
-    const response = await fetch(url, {
-      mode: 'cors', // Add this line
-      credentials: 'include',
-    });
-
-    if (response.status === 204) {
-      console.log('No submission found');
-      return null; // Indicate that there's no result
-    }
-
-    if (!response.ok) {
-      console.error('Error fetching submission data:', response);
-      throw new Error(`Failed to fetch data from ${url}`);
-    }
-
-    const responseData = await response.json();
-    console.log('Response:', responseData); // Log the response for inspection
-    return responseData;
-  } catch (error: any) {
-    console.error('Error fetching submission data:', error.message);
-    throw error;
-  }
-}
-
-interface SubmissionData {
-  url: string;
-  title: string;
-}
+  return await fetchProtectedData('/submission');
+};
 
 export const submitOrUpdateSubmission = async (data: SubmissionData) => {
-  const response = await fetch(`${apiUrl}/songs/`, {
+  return await fetchProtectedData('/songs/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(data),
   });
-
-  if (!response.ok) {
-    throw new Error('Failed to submit or update submission');
-  }
-
-  return response.json();
 };
 
 export const fetchChallengeData = async () => {
-  const url = `${apiUrl}/challenge`;
-  console.log('Fetching Challenge:', url);
+  return await baseFetch('/challenge');
+};
 
+export const fetchContestData = async (): Promise<Playlist | null> => {
   try {
-    const response = await fetch(url, {
-      mode: 'cors',
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      console.error('Error fetching challenge data:', response);
-      throw new Error(`Failed to fetch data from ${url}`);
-    }
-
-    const responseData = await response.json();
-    console.log('Response:', responseData);
-    return responseData;
+    const response = await baseFetch('/contest/'); // Update with your endpoint
+    return response as Playlist;
   } catch (error: any) {
-    console.error('Error fetching challenget data:', error.message);
+    console.error('Error fetching contest data:', error.message);
     throw error;
   }
-}
+};
 
-interface VoteReviewData {
-  id: string;
-  review: string;
-}
-
-export const submitVoteAndReview = async (data: VoteReviewData) => {
-  const response = await fetch(`${apiUrl}/vote/`, {
+export const submitVoteAndReview = async (data: Ballot) => {
+  return await fetchProtectedData('/vote/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(data),
   });
-
-  if (!response.ok) {
-    throw new Error('Failed to submit vote and review');
-  }
-
-  return response.json();
 };

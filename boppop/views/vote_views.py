@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -10,10 +11,6 @@ from ..serializers import VoteSerializer, SongSerializer  # Import SongSerialize
 @permission_classes([IsAuthenticated])
 def submit_vote(request):
     user = request.user
-
-    # Check if the user is an artist (you may have a custom way to identify artists)
-    if not user.is_artist:
-        return Response({'error': 'You need to be logged in to submit a vote.'}, status=status.HTTP_403_FORBIDDEN)
 
     # Check if there is an active playlist with a contest
     try:

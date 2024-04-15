@@ -1,17 +1,13 @@
 // components/PlaylistCard.tsx
 import React from 'react';
 import Link from 'next/link';
+import { Playlist } from '../types';
 
-interface PlaylistCardProps {
-  id: string;
-  theme: string;
-}
-
-const PlaylistCard: React.FC<PlaylistCardProps> = ({ id, theme }) => {
+const PlaylistCard: React.FC<{ playlist: Playlist }> = ({ playlist }) => {
   return (
-    <Link href={`/playlist/${id}`}>
+    <Link href={`/playlist/${playlist.id}`}>
       <div>
-        <p>{id} - {theme}</p>
+        <p>{playlist.id} - {playlist.theme}</p>
       </div>
     </Link>
   );

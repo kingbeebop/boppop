@@ -17,22 +17,28 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from .views import *
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
     path('api/', include([
+        path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+        path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
         path('admin/', admin.site.urls),
-        path('challenge', get_challenge),
-        path('submission', get_submission),
+        path('challenge/', get_challenge),
+        path('submission/', get_submission),
         path('songs/', song_list),
         path('songs/<int:id>', song_detail),
         path('artists/', artist_list),
         path('artists/<int:id>', artist_detail),
         path('playlists/', playlist_list),
         path('playlists/<int:id>', playlist_detail),
-        path('playlists/current', current_playlist),
+        path('playlists/current/', current_playlist),
         path('login/', login_user),
         path('logout/', logout_user),
         path('register/', register_user),
-        path('user/info', get_user_info),
+        path('user/info/', get_user_info),
+        path('token/verify/', authentication_views.TokenVerifyView.as_view(), name='token_verify'),
+        path('token/check-validity/', authentication_views.check_token_validity, name='check_token_validity'),
+        path('token/user-data/', authentication_views.get_user_data, name='get_user_data'),
     ])),
 ]

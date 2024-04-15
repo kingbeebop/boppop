@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 import os
 from decouple import config
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -115,7 +116,11 @@ AUTH_PASSWORD_VALIDATORS = [
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         #"rest_framework.authentication.SessionAuthentication",
-        "boppop.authentication.NoCSRFSessionAuthentication",
+        # "boppop.authentication.NoCSRFSessionAuthentication",
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
@@ -125,17 +130,23 @@ REST_FRAMEWORK = {
     ],
 }
 
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=14),
+    'ROTATE_REFRESH_TOKENS': True,
+}
+
 # AUTHENTICATION_BACKENDS = [
 #     'django.contrib.auth.backends.ModelBackend',
 #     "boppop.custom_auth_backend.CaseInsensitiveModelBackend",
 #     'allauth.account.auth_backends.AuthenticationBackend',
 # ]
 
-SESSION_COOKIE_SAMESITE = None
+# SESSION_COOKIE_SAMESITE = None
 
-# Configure session settings
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Use the database for session storage
-SESSION_COOKIE_AGE = 1209600  # Set the session cookie age in seconds (e.g., 2 weeks)
+# # Configure session settings
+# SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Use the database for session storage
+# SESSION_COOKIE_AGE = 1209600  # Set the session cookie age in seconds (e.g., 2 weeks)
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',

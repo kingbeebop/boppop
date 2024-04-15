@@ -1,17 +1,16 @@
 // components/ArtistCard.tsx
 import React from 'react';
 import Link from 'next/link';
+import { Artist } from '../types'
 
-interface ArtistCardProps {
-  id: string;
-  name: string;
-}
+const ArtistCard: React.FC<{ artist: Artist }> = ({ artist }) => {
 
-const ArtistCard: React.FC<ArtistCardProps> = ({ id, name }) => {
+  console.log(artist)
+
   return (
-    <Link href={`/artists/${encodeURIComponent(name)}`}>
+    <Link href={`/artists/${encodeURIComponent(artist.id)}`}>
       <div>
-        <p>{name}</p>
+        <p>{artist.username}</p>
       </div>
     </Link>
   );

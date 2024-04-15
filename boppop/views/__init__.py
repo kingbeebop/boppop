@@ -18,4 +18,7 @@ all = [
     'get_user_info',
     'get_challenge',
     'get_submission',
+    'get_user_data',
+    'check_token_validity',
+    'custom_validation_error',
 ]

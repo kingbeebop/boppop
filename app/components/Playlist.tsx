@@ -1,8 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
-import { fetchPlaylistAsync, selectPlaylistById } from '../redux/slices/playlistSlice';
-import { setSelectedSong } from '../redux/slices/songSlice';
+import { fetchPlaylistAsync } from '../redux/slices/playlistSlice';
 import SongCard from './SongCard';
 import { Song } from '../types';
 
@@ -13,7 +12,7 @@ interface PlaylistProps {
 const Playlist: React.FC<PlaylistProps> = ({ id }) => {
   const dispatch = useDispatch<any>();
   const { loading, error } = useSelector((state: RootState) => state.playlists);
-  const playlist = useSelector((state: RootState) => selectPlaylistById(state, id));
+  const playlist = useSelector((state: RootState) => state.playlists.playlists.find(p => p.id === id));
 
   useEffect(() => {
     if (!playlist) {

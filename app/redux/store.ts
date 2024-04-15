@@ -1,17 +1,21 @@
 import { configureStore } from '@reduxjs/toolkit';
 import playlistReducer from './slices/playlistSlice';
-import authReducer, { AuthState } from './slices/authSlice';
+import authReducer from './slices/authSlice';
 import songReducer from './slices/songSlice';
 import challengeReducer from './slices/challengeSlice';
 import submissionReducer from './slices/submissionSlice';
+import contestReducer from './slices/contestSlice';
+import artistReducer from './slices/artistSlice';
 
 const store = configureStore({
   reducer: {
     auth: authReducer,
+    artist: artistReducer,
     playlists: playlistReducer,
     song: songReducer,
     challenge: challengeReducer,
     submission: submissionReducer,
+    contest: contestReducer,
   },
 });
 
