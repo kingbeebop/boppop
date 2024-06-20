@@ -68,7 +68,13 @@ const playlistSlice = createSlice({
         state.loading = false;
         state.error = null;
         state.count = action.payload.count; // Update the count
-        state.playlists.push(...action.payload.results);
+
+        // Filter out playlists that already exist in the state
+        const newPlaylists = action.payload.results.filter(
+          (playlist) => !state.playlists.some((existingPlaylist) => existingPlaylist.id === playlist.id)
+        );
+
+        state.playlists.push(...newPlaylists);
         state.currentPage += 1;
       })
       .addCase(fetchPlaylistsAsync.rejected, (state, action) => {
@@ -82,7 +88,12 @@ const playlistSlice = createSlice({
       .addCase(fetchPlaylistAsync.fulfilled, (state, action: PayloadAction<Playlist>) => {
         state.loading = false;
         state.error = null;
-        state.playlists.push(action.payload);
+
+        // Check if the playlist already exists
+        const exists = state.playlists.some((playlist) => playlist.id === action.payload.id);
+        if (!exists) {
+          state.playlists.push(action.payload);
+        }
       })
       .addCase(fetchPlaylistAsync.rejected, (state, action) => {
         state.loading = false;
