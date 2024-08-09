@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { loginRequest, logoutRequest, checkTokenValidity, fetchUserData, getRefreshToken, refreshToken } from '../../utils/auth';
-import { LoginData, Artist } from '../../types';
+import { LoginData, Artist, AuthResponse } from '../../types';
 import { RootState } from '../store';
 
 export interface AuthState {
@@ -38,9 +38,9 @@ export const checkAuthStatus = createAsyncThunk('auth/checkAuthStatus', async (_
             const response = await refreshToken(refreshTokenValue);
             console.log("response: ", response)
             // Update tokens in local storage
-            if (response.access) {
-              localStorage.setItem('accessToken', response.access);
-              localStorage.setItem('refreshToken', response.refresh);
+            if (response.access_token) {
+              localStorage.setItem('accessToken', response.access_token);
+              localStorage.setItem('refreshToken', response.refresh_token);
               // Retry fetching user data after token refresh
               const userData = await fetchUserData();
               console.log(userData);

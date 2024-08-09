@@ -43,7 +43,7 @@ export const logoutRequest = async (): Promise<void> => {
   }
 };
 
-export const refreshToken = async (refreshToken: string): Promise<AuthResponse | { access: string, refresh: string }> => {
+export const refreshToken = async (refreshToken: string): Promise<AuthResponse> => {
   console.log("Alligator Swamp")
   console.log(refreshToken)
   try {
