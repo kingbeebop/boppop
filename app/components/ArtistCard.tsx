@@ -9,7 +9,7 @@ const ArtistCard: React.FC<{ artist: Artist }> = ({ artist }) => {
 
   return (
     <Link href={`/artists/${encodeURIComponent(artist.id)}`}>
-      <div>
+      <div className="hover-effect">
         <p>{artist.username}</p>
       </div>
     </Link>

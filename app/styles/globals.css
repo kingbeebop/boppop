@@ -18,7 +18,13 @@ aside {
   width: 25%; /* Set the desired width for the sidebar */
 }
 
+
 /* Import Tailwind CSS after custom styles */
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
+
+
+.hover-effect {
+  @apply transform transition duration-300 ease-in-out hover:scale-105 hover:shadow-lg;
+}
