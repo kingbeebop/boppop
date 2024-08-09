@@ -37,6 +37,7 @@ const Archive: React.FC = () => {
         placeholder="Search by ID or Theme"
         value={searchTerm}
         onChange={handleSearchChange}
+        style = {{color: 'black'}}
       />
       <button onClick={handleSearchSubmit}>Search</button>
       {loading ? (
