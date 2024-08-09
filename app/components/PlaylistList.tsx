@@ -5,7 +5,7 @@ import { Playlist } from '../types';
 
 const PlaylistList: React.FC<{ playlists: Playlist[] }> = ({ playlists }) => {
   return (
-    <div>
+    <div className="hover-effect">
       {playlists.map((playlist) => (
         <PlaylistCard key={playlist.id} playlist={playlist} />
       ))}
