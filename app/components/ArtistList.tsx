@@ -20,7 +20,7 @@ const ArtistList: React.FC = () => {
 
   return (
     <div>
-      <h1>Artists</h1>
+      <h1 className="centered-title">Artists</h1>
       {loading ? (
         <div>Loading...</div>
       ) : error ? (

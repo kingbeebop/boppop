@@ -31,7 +31,7 @@ const Archive: React.FC = () => {
 
   return (
     <div>
-      <h1>Bop Pop Archive</h1>
+      <h1 className="centered-title">Bop Pop Archive</h1>
       <input
         type="text"
         placeholder="Search by ID or Theme"
