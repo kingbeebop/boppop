@@ -6,7 +6,7 @@ import { Playlist } from '../types';
 const PlaylistCard: React.FC<{ playlist: Playlist }> = ({ playlist }) => {
   return (
     <Link href={`/playlist/${playlist.id}`}>
-      <div>
+      <div className="hover-effect">
         <p>{playlist.id} - {playlist.theme}</p>
       </div>
     </Link>

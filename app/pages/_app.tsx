@@ -5,6 +5,8 @@ import store from '../redux/store';
 import Layout from '../components/Layout';
 import ErrorBoundary from '../components/ErrorBoundary';
 import 'tailwindcss/tailwind.css';
+// require('dotenv').config({ path: '../../.env' });
+
 
 import '../styles/globals.css';
 

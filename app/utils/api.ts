@@ -1,7 +1,8 @@
-import { apiUrl } from './config';
 import { refreshToken, getRefreshToken } from './auth';
 import { SubmissionData, Ballot } from '../types'
 import { Playlist } from '../types';
+
+const apiUrl = process.env.API_BASE_URL
 
 const baseFetch = async (url: string, options?: RequestInit) => {
   const response = await fetch(`${apiUrl}${url}`, {
