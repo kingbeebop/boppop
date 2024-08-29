@@ -1,6 +1,13 @@
-// auth.ts
-import { apiUrl } from './config'; 
+// // auth.ts
 import { LoginData, AuthResponse } from '../types'
+
+const apiUrl = process.env.API_BASE_URL
+
+if (!apiUrl) {
+  throw new Error("NEXT_PUBLIC_API_BASE_URL is not defined");
+}
+
+console.log("API Base URL:", apiUrl); // Log this to confirm the value
 
 export const loginRequest = async (data: LoginData): Promise<AuthResponse> => {
   try {

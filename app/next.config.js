@@ -1,3 +1,5 @@
+require('dotenv').config({ path: '../.env' });
+
 /** @type {import('next').NextConfig} */
 // const nextConfig = {
 //     // Enable server-side rendering
@@ -12,7 +14,7 @@ module.exports = {
   
     // Define environment variables
     env: {
-      API_BASE_URL: 'https://api.example.com',
+      API_BASE_URL: process.env.BACKEND_URL,
       NEXT_PUBLIC_ANALYTICS_ID: 'your-analytics-id',
     },
   
