@@ -13,8 +13,8 @@ RUN npm ci
 COPY . .
 
 # Set environment variables for build time
-ENV NEXT_PUBLIC_API_BASE_URL=http://localhost:8001
-ENV NEXT_PUBLIC_API_URL=http://localhost:8001/api
+ENV NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
+ENV NEXT_PUBLIC_API_URL=http://localhost:8080/api
 
 # Build application
 RUN npm run build
@@ -29,13 +29,15 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/server.ts ./server.ts
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
 
 # Set environment variables for runtime
 ENV NODE_ENV=production
-ENV NEXT_PUBLIC_API_BASE_URL=http://localhost:8001
-ENV NEXT_PUBLIC_API_URL=http://localhost:8001/api
+ENV NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
+ENV NEXT_PUBLIC_API_URL=http://localhost:8080/api
 
 EXPOSE 3000
 
 # Use a shell to ensure environment variables are available
-CMD ["sh", "-c", "npm start"]
+CMD ["sh", "-c", "npx ts-node server.ts"]
