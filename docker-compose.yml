@@ -1,0 +1,103 @@
+services:
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    networks:
+      - boppop_network
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - boppop_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    command: >
+      sh -c "
+        echo 'Waiting for postgres...' &&
+        while ! nc -z db 5432; do sleep 1; done &&
+        echo 'PostgreSQL started' &&
+        python manage.py migrate &&
+        python manage.py collectstatic --noinput &&
+        gunicorn boppop.wsgi:application --bind 0.0.0.0:8000
+      "
+    expose:
+      - 8000
+    environment:
+      - DJANGO_SETTINGS_MODULE=boppop.settings
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DEBUG=True
+      - PYTHONUNBUFFERED=1
+    networks:
+      - boppop_network
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    expose:
+      - 3000
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
+      - NEXT_PUBLIC_API_URL=http://localhost:8080/api
+      - NODE_ENV=production
+    networks:
+      - boppop_network
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  boppop_network:
+    driver: bridge
+
+volumes:
+  postgres_data:

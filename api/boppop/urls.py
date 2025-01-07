@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from .views import *
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from .views.health import health_check
 
 urlpatterns = [
     path('api/', include([
@@ -41,4 +42,5 @@ urlpatterns = [
         path('token/check-validity/', authentication_views.check_token_validity, name='check_token_validity'),
         path('token/user-data/', authentication_views.get_user_data, name='get_user_data'),
     ])),
+    path('health/', health_check, name='health_check'),
 ]

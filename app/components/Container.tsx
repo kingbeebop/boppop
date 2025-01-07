@@ -1,5 +1,6 @@
 // components/Container.tsx
 import React, { ReactNode } from 'react';
+import config from '../config';
 
 interface ContainerProps {
   children?: ReactNode;

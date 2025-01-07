@@ -85,11 +85,11 @@ WSGI_APPLICATION = 'boppop.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME', default='', cast=str),
-        'USER': config('DB_USER', default='', cast=str),
-        'PASSWORD': config('DB_PASSWORD', default='', cast=str),
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': os.environ.get('DB_NAME', 'boppop'),
+        'USER': os.environ.get('DB_USER', 'boppop_user'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'boppop_password'),
+        'HOST': os.environ.get('DB_HOST', 'db'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
 
