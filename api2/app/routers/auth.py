@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from db.session import get_db
-from core.security import create_access_token, verify_password, get_password_hash
-from models.artist import Artist
+from app.db.session import get_db
+from app.core.security import create_access_token, verify_password, get_password_hash
+from app.models.artist import Artist
 from datetime import timedelta
-from core.config import settings
+from app.core.config import settings
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -14,13 +14,13 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
-class UserCreate(BaseModel):
-    username: str
-    password: str
-    email: str
+class TokenData(BaseModel):
+    username: str | None = None
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 @router.post("/token", response_model=Token)
-async def login(
+async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
@@ -40,20 +40,19 @@ async def login(
 
 @router.post("/register")
 async def register(
-    user_in: UserCreate,
+    form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
-    existing_user = db.query(Artist).filter(Artist.username == user_in.username).first()
+    existing_user = db.query(Artist).filter(Artist.username == form_data.username).first()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username already registered"
         )
     
-    hashed_password = get_password_hash(user_in.password)
+    hashed_password = get_password_hash(form_data.password)
     new_user = Artist(
-        username=user_in.username,
-        email=user_in.email,
+        username=form_data.username,
         hashed_password=hashed_password,
         is_active=True
     )

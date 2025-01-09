@@ -4,13 +4,12 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
 from datetime import datetime
 import asyncio
-from broadcaster import Broadcast
-from .types import Artist, Song, Playlist, Review, Vote, PaginatedResponse, PageInfo, ArtistSubscription, PlaylistSubscription, VoteSubscription
-from .inputs import ArtistInput, SongInput, PlaylistInput, ReviewInput, VoteInput, PaginationInput, SortInput, DateRangeInput, ArtistFilterInput, SongFilterInput, PlaylistFilterInput
-from ..db.session import get_db
-from .. import crud
-
-broadcast = Broadcast("memory://")
+from redis.asyncio import Redis
+from graphql.types import Artist, Song, Playlist, Review, Vote, PaginatedResponse, PageInfo, ArtistSubscription, PlaylistSubscription, VoteSubscription
+from graphql.inputs import ArtistInput, SongInput, PlaylistInput, ReviewInput, VoteInput, PaginationInput, SortInput, DateRangeInput, ArtistFilterInput, SongFilterInput, PlaylistFilterInput
+from db.session import get_db
+from core.redis import get_redis_client
+import json
 
 @strawberry.type
 class Query:
@@ -151,22 +150,40 @@ class Mutation:
 @strawberry.type
 class Subscription:
     @strawberry.subscription
-    async def artist_updates(self) -> AsyncGenerator[ArtistSubscription, None]:
-        async with broadcast.subscribe(channel="artist_updates") as subscriber:
-            async for event in subscriber:
-                yield ArtistSubscription(
-                    artist=event.message["artist"],
-                    action=event.message["action"]
-                )
+    async def artist_updates(self, redis: Redis = Depends(get_redis_client)) -> AsyncGenerator[ArtistSubscription, None]:
+        pubsub = redis.pubsub()
+        await pubsub.subscribe("artist_updates")
+        
+        try:
+            while True:
+                message = await pubsub.get_message(ignore_subscribe_messages=True)
+                if message is not None:
+                    payload = json.loads(message["data"])
+                    yield ArtistSubscription(
+                        artist=payload["artist"],
+                        action=payload["action"]
+                    )
+                await asyncio.sleep(0.1)
+        finally:
+            await pubsub.unsubscribe("artist_updates")
 
     @strawberry.subscription
-    async def playlist_updates(self) -> AsyncGenerator[PlaylistSubscription, None]:
-        async with broadcast.subscribe(channel="playlist_updates") as subscriber:
-            async for event in subscriber:
-                yield PlaylistSubscription(
-                    playlist=event.message["playlist"],
-                    action=event.message["action"]
-                )
+    async def playlist_updates(self, redis: Redis = Depends(get_redis_client)) -> AsyncGenerator[PlaylistSubscription, None]:
+        pubsub = redis.pubsub()
+        await pubsub.subscribe("playlist_updates")
+        
+        try:
+            while True:
+                message = await pubsub.get_message(ignore_subscribe_messages=True)
+                if message is not None:
+                    payload = json.loads(message["data"])
+                    yield PlaylistSubscription(
+                        playlist=payload["playlist"],
+                        action=payload["action"]
+                    )
+                await asyncio.sleep(0.1)
+        finally:
+            await pubsub.unsubscribe("playlist_updates")
 
     @strawberry.subscription
     async def vote_updates(self) -> AsyncGenerator[VoteSubscription, None]:

@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth
-from core.config import settings
-from core.redis import RedisManager
+from app.routers import auth
+from app.core.config import settings
+from app.core.redis import RedisManager
 from strawberry.fastapi import GraphQLRouter
-from graphql.schema import schema
+from app.graphql.schema import schema
 
 app = FastAPI(title="Bop Pop API")
 
@@ -46,4 +46,4 @@ async def health_check():
     return {
         "status": "healthy",
         "redis": redis_status
-    }
+    } 
