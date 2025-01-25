@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
-import { fetchArtistAsync } from '../redux/slices/artistSlice';
+import { fetchArtist } from '../redux/slices/artistSlice';
 
 const ArtistPage: React.FC = () => {
   const router = useRouter();
@@ -21,7 +21,7 @@ const ArtistPage: React.FC = () => {
 
   useEffect(() => {
     if (artistId) {
-      dispatch(fetchArtistAsync(artistId));
+      dispatch(fetchArtist(artistId));
     }
   }, [artistId, dispatch]);
 

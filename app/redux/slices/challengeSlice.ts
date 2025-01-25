@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../store';
-import { Artist } from '../../types'; // Import Artist type from types.ts
-import { fetchChallengeData } from '../../utils/api'; // Import fetchChallengeData function from api.ts
+import { Artist, Playlist } from '../../types'; // Import Artist type from types.ts
+import { getChallenge } from '../../services/api'; // Import fetchChallengeData function from api.ts
 
 interface ChallengeState {
   contest: boolean;
@@ -25,7 +25,7 @@ const initialState: ChallengeState = {
 
 export const fetchChallenge = createAsyncThunk('challenge/fetchChallenge', async () => {
   try {
-    const response = await fetchChallengeData(); // Call your fetch API function
+    const response = await getChallenge(); // Call your fetch API function
     console.log(response)
     return response; // Assuming response.data contains the challenge data
   } catch (error) {
@@ -42,13 +42,12 @@ const challengeSlice = createSlice({
       .addCase(fetchChallenge.pending, (state) => {
         state.status = 'loading';
       })
-      .addCase(fetchChallenge.fulfilled, (state, action: PayloadAction<ChallengeState>) => {
+      .addCase(fetchChallenge.fulfilled, (state, action: PayloadAction<Playlist>) => {
         state.status = 'succeeded';
         state.contest = action.payload.contest;
         state.theme = action.payload.theme;
         state.number = action.payload.number;
-        state.winner = action.payload.winner;
-        state.playlist_id = action.payload.playlist_id;
+        state.playlist_id = action.payload.id;
       })
       .addCase(fetchChallenge.rejected, (state) => {
         state.status = 'failed';

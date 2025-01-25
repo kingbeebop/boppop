@@ -1,17 +1,31 @@
-from sqlalchemy import Column, String, Integer, ForeignKey
-from sqlalchemy.orm import relationship
+from typing import List, TYPE_CHECKING
+from sqlalchemy import String, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import TimeStampedBase
+from .playlist_songs import playlist_songs
+
+if TYPE_CHECKING:
+    from .artist import Artist
+    from .playlist import Playlist
+    from .review import Review
+    from .vote import Vote
 
 class Song(TimeStampedBase):
     __tablename__ = "songs"
-
-    title = Column(String, nullable=False)
-    url = Column(String, nullable=False)
-    artist_id = Column(Integer, ForeignKey("artists.id"))
-    playlist_id = Column(Integer, ForeignKey("playlists.id"))
+    
+    # Columns
+    title: Mapped[str] = mapped_column(String(length=200))
+    url: Mapped[str] = mapped_column(String(length=500))
+    artist_id: Mapped[int] = mapped_column(ForeignKey("artists.id"))
     
     # Relationships
-    artist = relationship("Artist", back_populates="songs")
-    playlist = relationship("Playlist", back_populates="songs")
-    votes = relationship("Vote", back_populates="song")
-    reviews = relationship("Review", back_populates="song") 
+    artist: Mapped["Artist"] = relationship(back_populates="songs")
+    playlists: Mapped[List["Playlist"]] = relationship(
+        secondary=playlist_songs,
+        back_populates="songs"
+    )
+    reviews: Mapped[List["Review"]] = relationship(back_populates="song")
+    votes: Mapped[List["Vote"]] = relationship(back_populates="song")
+
+    def __repr__(self):
+        return f"<Song(title={self.title}, url={self.url})>"

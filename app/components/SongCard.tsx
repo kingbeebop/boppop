@@ -3,6 +3,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
 import { setSelectedSong } from '../redux/slices/songSlice';
 import { Song } from '../types';
+import { ListItemButton, ListItemText, ListItemIcon } from '@mui/material';
+import MusicNoteIcon from '@mui/icons-material/MusicNote';
 
 interface SongCardProps {
   song: Song;
@@ -11,45 +13,42 @@ interface SongCardProps {
 const SongCard: React.FC<SongCardProps> = ({ song }) => {
   const dispatch = useDispatch();
   const selectedSong = useSelector((state: RootState) => state.song.selectedSong);
-  const [isHovered, setIsHovered] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
 
   useEffect(() => {
     setIsSelected(selectedSong?.id === song.id);
-  }, [selectedSong]);
-
-  useEffect(() => {
-    if (selectedSong?.id === song.id){
-      console.log("Dino Nuggets")
-    }
-  }, [isSelected])
+  }, [selectedSong?.id, song.id]);
 
   const handleClick = () => {
     dispatch(setSelectedSong(song));
-    // console.log(selectedSong.id)
-    console.log(song.id)
-  };
-
-  const handleMouseEnter = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
   };
 
   return (
-    <div
-      className={`p-3 border rounded cursor-pointer ${isSelected ? 'bg-green-500' : ''}`}
+    <ListItemButton
       onClick={handleClick}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      style={{ backgroundColor: isSelected ? 'green' : 'transparent' }}
+      selected={isSelected}
+      sx={{
+        borderRadius: 1,
+        mb: 1,
+        '&.Mui-selected': {
+          backgroundColor: 'primary.main',
+          '&:hover': {
+            backgroundColor: 'primary.dark',
+          },
+        },
+      }}
     >
-      <div className={`${isHovered ? 'ml-4 transition-all duration-500' : ''}`}>
-        <strong>{song.title}</strong> by {song.artist}
-      </div>
-    </div>
+      <ListItemIcon>
+        <MusicNoteIcon color={isSelected ? 'primary' : 'inherit'} />
+      </ListItemIcon>
+      <ListItemText
+        primary={song.title}
+        secondary={song.artist}
+        primaryTypographyProps={{
+          fontWeight: isSelected ? 600 : 400,
+        }}
+      />
+    </ListItemButton>
   );
 };
 

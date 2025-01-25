@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { fetchSubmission, submitOrUpdateSubmission } from '../../utils/api'; // Import submitOrUpdateSubmission from utils/api
+import { getSubmission, submitOrUpdateSubmission } from '../../services/api'; // Import submitOrUpdateSubmission from utils/api
 import { Song } from '../../types'; // Import Song type from types file
 
 interface SubmissionData {
@@ -36,7 +36,7 @@ export const fetchSubmissionData = createAsyncThunk(
   'submission/fetchSubmissionData',
   async () => {
     try {
-      const response = await fetchSubmission();
+      const response = await getSubmission();
       return response;
     } catch (error: any) {
       throw new Error('Error fetching submission data');
@@ -82,7 +82,7 @@ const submissionSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(fetchSubmissionData.fulfilled, (state, action: PayloadAction<Song>) => {
+      .addCase(fetchSubmissionData.fulfilled, (state, action: PayloadAction<Song | null>) => {
         state.song = action.payload;
         state.isLoading = false;
         state.error = null;

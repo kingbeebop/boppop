@@ -1,9 +1,19 @@
+from .base import Base
+from .user import User
 from .artist import Artist
 from .song import Song
 from .playlist import Playlist
 from .review import Review
 from .vote import Vote
-from .base import Base, TimeStampedBase
+from .playlist_songs import playlist_songs
 
-# For convenience when creating all tables
-all_models = [Artist, Song, Playlist, Review, Vote] 
+__all__ = [
+    "Base",
+    "User",
+    "Artist",
+    "Song",
+    "Playlist",
+    "Review",
+    "Vote",
+    "playlist_songs"
+]

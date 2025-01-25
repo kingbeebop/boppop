@@ -1,16 +1,18 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../store';
-import { fetchPlaylist, fetchPlaylists } from '../../utils/api';
-import { Playlist } from '../../types';
+import { getPlaylist, getPlaylists } from '../../services/api';
+import { Playlist, PlaylistResponse } from '../../types';
 
 interface PlaylistState {
   playlists: Playlist[];
   loading: boolean;
   error: string | null;
   currentPage: number;
+  totalPages: number;
+  count: number;
+  totalItems: number;
   limit: number;
   search: string;
-  count: number; // Total count of playlists
 }
 
 const initialState: PlaylistState = {
@@ -18,39 +20,26 @@ const initialState: PlaylistState = {
   loading: false,
   error: null,
   currentPage: 1,
-  limit: 10, // Default limit
+  totalPages: 0,
+  count: 0,
+  totalItems: 0,
+  limit: 10,
   search: '',
-  count: 0, // Initialize count to 0
 };
 
-export const fetchPlaylistAsync = createAsyncThunk(
+export const fetchPlaylist = createAsyncThunk(
   'playlists/fetchPlaylist',
-  async (id: number, { getState }) => {
-    const state = getState() as RootState;
-    const existingPlaylist = state.playlists.playlists.find((playlist) => playlist.id === id);
-
-    if (existingPlaylist) {
-      return existingPlaylist;
-    } else {
-      try {
-        const response = await fetchPlaylist(id);
-        return response;
-      } catch (error) {
-        throw new Error('Failed to fetch playlist');
-      }
-    }
+  async (id: number) => {
+    const response = await getPlaylist(id);
+    return response;
   }
 );
 
-export const fetchPlaylistsAsync = createAsyncThunk(
+export const fetchPlaylists = createAsyncThunk(
   'playlists/fetchPlaylists',
   async ({ limit, page, search }: { limit?: number; page?: number; search?: string }) => {
-    try {
-      const response = await fetchPlaylists(limit || 10, page || 1, search || '');
-      return response;
-    } catch (error) {
-      throw new Error('Failed to fetch playlists');
-    }
+    const response = await getPlaylists({ limit, page, search });
+    return response;
   }
 );
 
@@ -60,44 +49,21 @@ const playlistSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(fetchPlaylistsAsync.pending, (state) => {
+      .addCase(fetchPlaylists.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchPlaylistsAsync.fulfilled, (state, action: PayloadAction<{ count: number; results: Playlist[] }>) => {
+      .addCase(fetchPlaylists.fulfilled, (state, action: PayloadAction<PlaylistResponse>) => {
         state.loading = false;
         state.error = null;
-        state.count = action.payload.count; // Update the count
-
-        // Filter out playlists that already exist in the state
-        const newPlaylists = action.payload.results.filter(
-          (playlist) => !state.playlists.some((existingPlaylist) => existingPlaylist.id === playlist.id)
-        );
-
-        state.playlists.push(...newPlaylists);
-        state.currentPage += 1;
+        state.playlists = action.payload.items;
+        state.currentPage = action.payload.currentPage;
+        state.totalPages = action.payload.totalPages;
+        state.totalItems = action.payload.totalItems;
       })
-      .addCase(fetchPlaylistsAsync.rejected, (state, action) => {
+      .addCase(fetchPlaylists.rejected, (state) => {
         state.loading = false;
         state.error = 'Failed to fetch playlists';
-      })
-      .addCase(fetchPlaylistAsync.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchPlaylistAsync.fulfilled, (state, action: PayloadAction<Playlist>) => {
-        state.loading = false;
-        state.error = null;
-
-        // Check if the playlist already exists
-        const exists = state.playlists.some((playlist) => playlist.id === action.payload.id);
-        if (!exists) {
-          state.playlists.push(action.payload);
-        }
-      })
-      .addCase(fetchPlaylistAsync.rejected, (state, action) => {
-        state.loading = false;
-        state.error = 'Failed to fetch playlist';
       });
   },
 });

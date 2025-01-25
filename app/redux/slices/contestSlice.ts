@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { RootState } from '../store';
-import { fetchContestData, submitVoteAndReview } from '../../utils/api'; // Update with your API functions
+import { getContest, submitVoteAndReview } from '../../services/api'; // Update with your API functions
 import { Song, Ballot, Playlist } from '../../types';
 
 interface ContestState {
@@ -19,7 +19,7 @@ const initialState: ContestState = {
 
 // Async thunk to fetch contest data
 export const getContestData = createAsyncThunk('contest/fetchContestData', async () => {
-  const response = await fetchContestData(); // Call directly from API file
+  const response = await getContest(); // Call directly from API file
   return response;
 });
 

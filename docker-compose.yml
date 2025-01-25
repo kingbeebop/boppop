@@ -8,92 +8,79 @@ services:
     networks:
       - boppop_network
     depends_on:
-      db:
-        condition: service_healthy
-      backend:
+      fastapi:
         condition: service_healthy
       frontend:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 5s
 
-  db:
-    image: postgres:15
+  fastapi:
+    build:
+      context: ./api2
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    networks:
+      - boppop_network
     environment:
-      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_SERVER=db
+      - POSTGRES_PORT=5432
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - boppop_network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  backend:
-    build:
-      context: ./api
-      dockerfile: Dockerfile
-    command: >
-      sh -c "
-        echo 'Waiting for postgres...' &&
-        while ! nc -z db 5432; do sleep 1; done &&
-        echo 'PostgreSQL started' &&
-        python manage.py migrate &&
-        python manage.py collectstatic --noinput &&
-        gunicorn boppop.wsgi:application --bind 0.0.0.0:8000
-      "
-    expose:
-      - 8000
-    environment:
-      - DJANGO_SETTINGS_MODULE=boppop.settings
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DEBUG=True
-      - PYTHONUNBUFFERED=1
-    networks:
-      - boppop_network
+      - POSTGRES_DB=boppop_user
+      - JWT_SECRET=${JWT_SECRET}
+      - REDIS_URL=redis://redis:6379
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
 
   frontend:
     build:
       context: ./app
       dockerfile: Dockerfile
-    expose:
-      - 3000
+    networks:
+      - boppop_network
     environment:
       - NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
       - NEXT_PUBLIC_API_URL=http://localhost:8080/api
-      - NODE_ENV=production
+    depends_on:
+      fastapi:
+        condition: service_healthy
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=boppop_user
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./api2/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: ["postgres", "-c", "listen_addresses=*"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - boppop_network
-    depends_on:
-      backend:
-        condition: service_healthy
+
+  redis:
+    image: redis:alpine
+    networks:
+      - boppop_network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
 networks:
   boppop_network:

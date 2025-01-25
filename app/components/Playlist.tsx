@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
-import { fetchPlaylistAsync } from '../redux/slices/playlistSlice';
+import { fetchPlaylist } from '../redux/slices/playlistSlice';
 import SongCard from './SongCard';
 import { Song } from '../types';
 
@@ -16,7 +16,7 @@ const Playlist: React.FC<PlaylistProps> = ({ id }) => {
 
   useEffect(() => {
     if (!playlist) {
-      dispatch(fetchPlaylistAsync(id));
+      dispatch(fetchPlaylist(id));
     }
   }, [dispatch, id, playlist]);
 

@@ -12,6 +12,13 @@ export interface Artist {
   bio: string | null;
   profile_pic: string | null;
 }
+
+export interface ArtistResponse {
+  items: Artist[];
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+}
   
 export interface Playlist {
   id: number;
@@ -24,9 +31,23 @@ export interface Playlist {
   songs: Song[];
 }
 
-export interface LoginData {
+export interface PlaylistResponse {
+  items: Playlist[];
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+}
+
+export interface Login {
   username: string;
   password: string;
+}
+
+export interface Registration {
+  username: string;
+  password: string;
+  password2: string;
+  email: string;
 }
 
 export interface AuthResponse {
@@ -35,12 +56,35 @@ export interface AuthResponse {
   user: Artist;
 }
 
-export interface SubmissionData {
+export interface Submission {
   url: string;
   title: string;
 }
 
 export interface Ballot {
   songId: number | null;
+  comments: string;
+}
+
+export interface Review {
+  id: number;
+  content: string;
+  username: string;
+}
+
+export interface Submission {
+  url: string;
+  title: string;
+}
+
+export interface SubmissionResponse {
+  items: Submission[];
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+}
+
+export interface Vote {
+  songId: number;
   comments: string;
 }

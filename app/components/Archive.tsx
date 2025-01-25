@@ -2,24 +2,22 @@
 
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../redux/store';
-import { fetchPlaylistsAsync, selectPlaylists } from '../redux/slices/playlistSlice';
-import PlaylistList from './PlaylistList';
-import { Playlist } from '../types';
+import { fetchPlaylists, selectPlaylists } from '../redux/slices/playlistSlice';
+import ChallengeList from './ChallengeList';
 
 const Archive: React.FC = () => {
   const dispatch = useDispatch<any>();
-  const { playlists, loading, error, currentPage, limit, search, count } = useSelector(selectPlaylists);
+  const { loading, error, currentPage, limit, search, count } = useSelector(selectPlaylists);
   const [searchTerm, setSearchTerm] = useState('');
   const totalPages = Math.ceil(count / limit);
 
   useEffect(() => {
-    dispatch(fetchPlaylistsAsync({ limit, page: 1, search }));
+    dispatch(fetchPlaylists({ limit, page: 1, search }));
   }, [dispatch, limit, search]);
 
   const handleLoadMore = () => {
     if (currentPage < totalPages) {
-      dispatch(fetchPlaylistsAsync({ limit, page: currentPage + 1, search }));
+      dispatch(fetchPlaylists({ limit, page: currentPage + 1, search }));
     }
   };
 
@@ -28,7 +26,7 @@ const Archive: React.FC = () => {
   };
 
   const handleSearchSubmit = () => {
-    dispatch(fetchPlaylistsAsync({ limit, page: 1, search: searchTerm }));
+    dispatch(fetchPlaylists({ limit, page: 1, search: searchTerm }));
   };
 
   return (
@@ -48,7 +46,7 @@ const Archive: React.FC = () => {
         <div>Error: {error}</div>
       ) : (
         <React.Fragment>
-          <PlaylistList playlists={playlists} />
+          <ChallengeList />
           {currentPage < totalPages && (
             <button onClick={handleLoadMore}>Load More</button>
           )}

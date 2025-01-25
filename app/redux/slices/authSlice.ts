@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { loginRequest, logoutRequest, checkTokenValidity, fetchUserData, getRefreshToken, refreshToken } from '../../utils/auth';
-import { LoginData, Artist, AuthResponse } from '../../types';
-import { RootState } from '../store';
+import { loginUser as loginUserApi, logoutUser as logoutUserApi, attemptTokenLogin } from '../../services/api';
+import { Login, Artist } from '../../types';
 
 export interface AuthState {
   user: { username: string } | null;
@@ -11,91 +10,33 @@ export interface AuthState {
 
 const initialState: AuthState = {
   user: null,
-  loading: true,
+  loading: false,
   error: null,
 };
 
-export const checkAuthStatus = createAsyncThunk('auth/checkAuthStatus', async (_, { getState, dispatch, rejectWithValue }) => {
-  try {
-    const state = getState() as RootState;
-    const { user } = state.auth;
-
-    if (!user) {
-      const isValidToken = await checkTokenValidity();
-
-      if (isValidToken) {
-        const userData = await fetchUserData();
-        console.log(userData);
-        dispatch(authActions.updateUserData(userData));
-        return userData;
-      } else {
-        // Attempt token refresh if refreshToken is available
-        const refreshTokenValue = getRefreshToken();
-        if (refreshTokenValue) {
-          try {
-            console.log("HELLA")
-            console.log(refreshTokenValue)
-            const response = await refreshToken(refreshTokenValue);
-            console.log("response: ", response)
-            // Update tokens in local storage
-            if (response.access_token) {
-              localStorage.setItem('accessToken', response.access_token);
-              localStorage.setItem('refreshToken', response.refresh_token);
-              // Retry fetching user data after token refresh
-              const userData = await fetchUserData();
-              console.log(userData);
-              dispatch(authActions.updateUserData(userData));
-              return userData;
-            }
-            else{
-              throw new Error('No token received');
-            }
-          } catch (refreshError: any) {
-            console.error('Token refresh error:', refreshError.message);
-            throw new Error('Error refreshing token');
-          }
-        } else {
-          throw new Error('No refresh token available');
-        }
-      }
-    }
-
-    return user;
-  } catch (error: unknown) {
-    console.error('Error checking authentication status:', error);
-    return rejectWithValue('Error checking authentication status');
-  }
-});
-
-export const loginUser = createAsyncThunk(
-  'auth/loginUser',
-  async (loginData: LoginData) => {
-    try {
-      const data = await loginRequest(loginData);
-      return data.user;
-    } catch (error: unknown) {
-      if (typeof error === 'string') {
-        throw new Error(error || 'Login failed');
-      } else {
-        throw new Error('An unknown error occurred during login');
-      }
-    }
+export const login = createAsyncThunk(
+  'auth/login',
+  async (data: Login) => {
+    const response = await loginUserApi(data);
+    return response.user;
   }
 );
 
-export const logoutUser = createAsyncThunk(
-  'auth/logoutUser',
+export const logout = createAsyncThunk(
+  'auth/logout',
   async () => {
-    try {
-      await logoutRequest();
-      return null;
-    } catch (error: unknown) {
-      if (typeof error === 'string') {
-        throw new Error(error || 'Logout failed');
-      } else {
-        throw new Error('An unknown error occurred during logout');
-      }
+    await logoutUserApi();
+  }
+);
+
+export const checkAuthStatus = createAsyncThunk(
+  'auth/checkAuthStatus',
+  async (_, { dispatch }) => {
+    const user = await attemptTokenLogin();
+    if (user) {
+      dispatch(updateUserData(user));
     }
+    return user;
   }
 );
 
@@ -103,44 +44,52 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    updateUserData(state, action: PayloadAction<Artist | { username: string } | null>) {
-      if (action.payload) {
-        const username = 'username' in action.payload ? action.payload.username : action.payload;
-        state.user = { username };
-      } else {
-        state.user = null;
-      }
+    updateUserData: (state, action: PayloadAction<Artist>) => {
+      state.user = { username: action.payload.username };
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(loginUser.pending, (state) => {
+      .addCase(login.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(loginUser.fulfilled, (state, action) => {
+      .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload;
       })
-      .addCase(loginUser.rejected, (state, action) => {
+      .addCase(login.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Login failed';
       })
-      .addCase(logoutUser.pending, (state) => {
+      .addCase(logout.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(logoutUser.fulfilled, (state) => {
+      .addCase(logout.fulfilled, (state) => {
         state.loading = false;
         state.user = null;
       })
-      .addCase(logoutUser.rejected, (state, action) => {
+      .addCase(logout.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Logout failed';
       })
-      .addDefaultCase((state) => state);
+      .addCase(checkAuthStatus.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(checkAuthStatus.fulfilled, (state, action) => {
+        state.loading = false;
+        if (action.payload) {
+          state.user = { username: action.payload.username };
+        }
+      })
+      .addCase(checkAuthStatus.rejected, (state) => {
+        state.loading = false;
+        state.user = null;
+      });
   },
 });
 
-export const authActions = authSlice.actions;
+export const { updateUserData } = authSlice.actions;
 export default authSlice.reducer;

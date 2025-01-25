@@ -1,14 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth
 from core.config import settings
-from core.redis import RedisManager
-from strawberry.fastapi import GraphQLRouter
-from graphql.schema import schema
+from core.users import auth_backend, fastapi_users
+from schemas.auth import UserRead, UserCreate, UserUpdate
 
-app = FastAPI(title="Bop Pop API")
+app = FastAPI(title=settings.PROJECT_NAME)
 
-# Configure CORS
+# CORS configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -17,33 +15,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include auth router
-app.include_router(auth.router, prefix="/api", tags=["auth"])
-
-# GraphQL endpoint
-graphql_app = GraphQLRouter(schema)
-app.include_router(graphql_app, prefix="/graphql")
-
-@app.on_event("startup")
-async def startup_event():
-    # Initialize Redis connection pool
-    await RedisManager.get_redis()
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    # Close Redis connections
-    await RedisManager.close()
-
+# Health check endpoint
 @app.get("/health")
 async def health_check():
-    redis = await RedisManager.get_redis()
-    try:
-        await redis.ping()
-        redis_status = "healthy"
-    except Exception:
-        redis_status = "unhealthy"
-    
-    return {
-        "status": "healthy",
-        "redis": redis_status
-    }
+    return {"status": "healthy"}
+
+# Auth routes
+app.include_router(
+    fastapi_users.get_auth_router(auth_backend),
+    prefix="/api/auth/jwt",
+    tags=["auth"]
+)
+
+app.include_router(
+    fastapi_users.get_register_router(UserRead, UserCreate),
+    prefix="/api/auth",
+    tags=["auth"]
+)
+
+app.include_router(
+    fastapi_users.get_reset_password_router(),
+    prefix="/api/auth",
+    tags=["auth"]
+)
+
+app.include_router(
+    fastapi_users.get_verify_router(UserRead),
+    prefix="/api/auth",
+    tags=["auth"]
+)
+
+app.include_router(
+    fastapi_users.get_users_router(UserRead, UserUpdate),
+    prefix="/api/users",
+    tags=["users"]
+)

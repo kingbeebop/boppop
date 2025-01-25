@@ -1,52 +1,76 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginUser, logoutUser, checkAuthStatus } from '../redux/slices/authSlice';
-import { RootState } from '../redux/store';
 import { useRouter } from 'next/router';
-import Modal from 'react-bootstrap/Modal';
-import Button from 'react-bootstrap/Button';
+import {
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Alert,
+  IconButton,
+  Box,
+  Typography,
+  useTheme,
+  Fade,
+  CircularProgress,
+} from '@mui/material';
+import { Close as CloseIcon } from '@mui/icons-material';
+import { login, logout, checkAuthStatus } from '../redux/slices/authSlice';
+import { RootState } from '../redux/store';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+
+const validationSchema = Yup.object({
+  username: Yup.string()
+    .required('Username is required'),
+  password: Yup.string()
+    .required('Password is required'),
+});
 
 const Login: React.FC = () => {
   const dispatch = useDispatch<any>();
-  const user = useSelector((state: RootState) => state.auth.user);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [showModal, setShowModal] = useState(false);
   const router = useRouter();
+  const theme = useTheme();
+  const user = useSelector((state: RootState) => state.auth.user);
+  const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Run the checkAuthStatus action on initial load if user is null
   useEffect(() => {
     if (!user) {
-      console.log("Hello!")
       dispatch(checkAuthStatus());
     }
   }, [dispatch, user]);
 
+  const formik = useFormik({
+    initialValues: {
+      username: '',
+      password: '',
+    },
+    validationSchema,
+    onSubmit: async (values, { setSubmitting }) => {
+      try {
+        setError(null);
+        await dispatch(login(values));
+        handleClose();
+      } catch (err: any) {
+        setError(err.response?.data?.message || 'Login failed. Please try again.');
+      } finally {
+        setSubmitting(false);
+      }
+    },
+  });
 
-  const handleClose = () => setShowModal(false);
-  const handleShow = () => setShowModal(true);
-
-  const handleLogin = () => {
-    try {
-      dispatch(loginUser({ username, password }));
-      handleClose(); // Close the modal after dispatching loginUser
-      console.log('Login successful');
-    } catch (error) {
-      setError('Invalid username or password');
-      console.error('Login error:', error);
-    }
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => {
+    setOpen(false);
+    setError(null);
+    formik.resetForm();
   };
 
   const handleLogout = () => {
-    dispatch(logoutUser());
-    console.log('Logout successful');
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleLogin();
-    }
+    dispatch(logout());
   };
 
   const handleRegisterClick = () => {
@@ -54,58 +78,151 @@ const Login: React.FC = () => {
     router.push('/register');
   };
 
+  if (user) {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          Hello, {user.username}!
+        </Typography>
+        <Button
+          variant="outlined"
+          color="primary"
+          size="small"
+          onClick={handleLogout}
+        >
+          Logout
+        </Button>
+      </Box>
+    );
+  }
+
   return (
     <>
-      {!user && (
-        <Button variant="primary" onClick={handleShow}>
-          Login
-        </Button>
-      )}
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={handleOpen}
+        sx={{
+          borderRadius: 2,
+          textTransform: 'none',
+        }}
+      >
+        Login
+      </Button>
 
-      <Modal show={showModal} onHide={handleClose} centered>
-        <Modal.Header closeButton className="bg-black">
-          <Modal.Title>Login</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="bg-black rounded-lg p-4">
-          <div className="mb-3 border-white border rounded">
-            <input
-              type="text"
-              placeholder="Username"
-              className="form-control bg-black text-white"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              onKeyDown={handleKeyDown}
-            />
-          </div>
-          <div className="mb-3 border-white border rounded">
-            <input
-              type="password"
-              placeholder="Password"
-              className="form-control bg-black text-white"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={handleKeyDown}
-            />
-          </div>
-          {error && <div className="text-danger mb-3">{error}</div>}
-          <Button variant="primary" onClick={handleLogin}>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth="xs"
+        fullWidth
+        TransitionComponent={Fade}
+        TransitionProps={{ timeout: 300 }}
+        PaperProps={{
+          elevation: 8,
+          sx: {
+            borderRadius: 2,
+            bgcolor: 'background.paper',
+          },
+        }}
+      >
+        <DialogTitle sx={{ m: 0, p: 2, pb: 1 }}>
+          <Typography variant="h6" component="div">
             Login
-          </Button>
-          <div className="flex justify-between">
-            <Button variant="secondary" onClick={handleRegisterClick}>Register</Button>
-            <Button variant="link">Forgot Password?</Button>
-          </div>
-        </Modal.Body>
-      </Modal>
+          </Typography>
+          <IconButton
+            onClick={handleClose}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: 'text.secondary',
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
 
-      {user && (
-        <div className="flex items-row justify-end mb-3">
-          <div className="mr-3">Hello {user.username}!</div>
-          <Button variant="primary" onClick={handleLogout}>
-            Logout
-          </Button>
-        </div>
-      )}
+        <form onSubmit={formik.handleSubmit}>
+          <DialogContent sx={{ pt: 1 }}>
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+
+            <TextField
+              fullWidth
+              id="username"
+              name="username"
+              label="Username"
+              value={formik.values.username}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.username && Boolean(formik.errors.username)}
+              helperText={formik.touched.username && formik.errors.username}
+              sx={{ mb: 2 }}
+            />
+
+            <TextField
+              fullWidth
+              id="password"
+              name="password"
+              label="Password"
+              type="password"
+              value={formik.values.password}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.password && Boolean(formik.errors.password)}
+              helperText={formik.touched.password && formik.errors.password}
+            />
+          </DialogContent>
+
+          <DialogActions sx={{ px: 3, pb: 3, flexDirection: 'column', gap: 1 }}>
+            <Button
+              fullWidth
+              type="submit"
+              variant="contained"
+              disabled={formik.isSubmitting}
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                position: 'relative',
+              }}
+            >
+              {formik.isSubmitting ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                'Login'
+              )}
+            </Button>
+
+            <Box sx={{ display: 'flex', gap: 2, width: '100%' }}>
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={handleRegisterClick}
+                sx={{
+                  borderRadius: 2,
+                  textTransform: 'none',
+                }}
+              >
+                Register
+              </Button>
+              <Button
+                fullWidth
+                variant="text"
+                onClick={handleClose}
+                sx={{
+                  borderRadius: 2,
+                  textTransform: 'none',
+                }}
+              >
+                Forgot Password?
+              </Button>
+            </Box>
+          </DialogActions>
+        </form>
+      </Dialog>
     </>
   );
 };

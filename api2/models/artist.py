@@ -1,18 +1,25 @@
-from sqlalchemy import Column, String, Boolean
-from sqlalchemy.orm import relationship
+from typing import List, TYPE_CHECKING
+from sqlalchemy import String, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import TimeStampedBase
+
+if TYPE_CHECKING:
+    from .user import User
+    from .song import Song
+    from .review import Review
+    from .vote import Vote
 
 class Artist(TimeStampedBase):
     __tablename__ = "artists"
 
-    username = Column(String, unique=True, index=True)
-    email = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
-    is_active = Column(Boolean, default=True)
-    bio = Column(String, nullable=True)
-    profile_pic = Column(String, nullable=True)
+    # Columns
+    name: Mapped[str] = mapped_column(String(length=100))
+    bio: Mapped[str | None] = mapped_column(String)
+    profile_pic: Mapped[str | None] = mapped_column(String)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     
     # Relationships
-    songs = relationship("Song", back_populates="artist")
-    votes = relationship("Vote", back_populates="artist")
-    reviews = relationship("Review", back_populates="artist") 
+    user: Mapped["User"] = relationship(back_populates="artists")
+    songs: Mapped[List["Song"]] = relationship(back_populates="artist")
+    written_reviews: Mapped[List["Review"]] = relationship(back_populates="author")
+    votes: Mapped[List["Vote"]] = relationship(back_populates="artist")

@@ -1,38 +1,45 @@
 // components/ArtistList.tsx
 
-import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React from 'react';
+import { useRouter } from 'next/router';
+import { useSelector } from 'react-redux';
+import { Box, Typography, Container } from '@mui/material';
 import { RootState } from '../redux/store';
-import { fetchArtistsAsync } from '../redux/slices/artistSlice';
-import ArtistCard from './ArtistCard';
+import SelectableList, { SelectableItem } from './common/SelectableList';
 import { Artist } from '../types';
 
 const ArtistList: React.FC = () => {
-  const dispatch = useDispatch<any>();
-  const { artists, loading, error, currentPage, limit, search } = useSelector(
-    (state: RootState) => state.artist
-  );
+  const router = useRouter();
+  const { artists, loading } = useSelector((state: RootState) => state.artist);
 
-  useEffect(() => {
-    dispatch(fetchArtistsAsync({ limit, page: currentPage, search }));
-    console.log(artists)
-  }, [dispatch, currentPage, limit, search]);
+  const artistItems: SelectableItem[] = artists.map((artist: Artist) => ({
+    id: artist.id,
+    title: artist.username,
+    subtitle: artist.bio ?? 'No bio available',
+    imageUrl: artist.profile_pic ?? undefined,
+    data: artist,
+  }));
+
+  const handleSelect = (item: SelectableItem) => {
+    router.push(`/artists/${item.id}`);
+  };
 
   return (
-    <div>
-      <h1 className="centered-title">Artists</h1>
-      {loading ? (
-        <div>Loading...</div>
-      ) : error ? (
-        <div>Error: {error}</div>
-      ) : (
-        <div>
-          {artists.map((artist: Artist) => (
-            <ArtistCard key={artist.id} artist={artist} />
-          ))}
-        </div>
-      )}
-    </div>
+    <Container maxWidth="md">
+      <Box sx={{ py: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Artists
+        </Typography>
+        <SelectableList
+          items={artistItems}
+          onSelect={handleSelect}
+          isLoading={loading}
+          showAvatar
+          emptyMessage="No artists found yet"
+          sx={{ mt: 3 }}
+        />
+      </Box>
+    </Container>
   );
 };
 
