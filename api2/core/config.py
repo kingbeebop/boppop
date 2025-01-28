@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str = Field(default="boppop_password", alias="DB_PASSWORD")
     POSTGRES_DB: str = Field(default="boppop", alias="DB_NAME")
     
+    SQL_ECHO: bool = Field(default=True)
+    
     API_HOST: str = Field(default="0.0.0.0")
     API_PORT: int = Field(default=8000)
     
@@ -29,6 +31,14 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "http://localhost:8080",
     ]
+    
+    @property
+    def SQLALCHEMY_DATABASE_URL(self) -> str:
+        return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
+    
+    @property
+    def SYNC_SQLALCHEMY_DATABASE_URL(self) -> str:
+        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
     
     class Config:
         env_file = Path(__file__).parents[2] / '.env'

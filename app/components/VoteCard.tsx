@@ -1,25 +1,28 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
-import { setBallot } from '../redux/slices/contestSlice'; // Update to match your slice name and action
-import { Song } from '../types';
+import { setBallot } from '../redux/slices/contestSlice';
 
 interface VoteCardProps {
-  song: Song;
-  onRadialSelect: (song: Song) => void;
+  songId: string;
+  playlistId: string;
 }
 
-const VoteCard: React.FC<VoteCardProps> = ({ song, onRadialSelect }) => {
+const VoteCard: React.FC<VoteCardProps> = ({ songId, playlistId }) => {
   const dispatch = useDispatch();
-  const ballot = useSelector((state: RootState) => state.contest.ballot); // Update to match your slice name
+  const song = useSelector((state: RootState) => state.songs.byId[songId]);
+  const artist = useSelector((state: RootState) => 
+    song ? state.artists.byId[song.artistId] : null
+  );
+  const ballot = useSelector((state: RootState) => state.contest.ballot);
   const [isHovered, setIsHovered] = useState(false);
 
   const handleClick = () => {
-    dispatch(setBallot({ songId: song.id }));
-  };
-
-  const handleRadialSelect = () => {
-    onRadialSelect(song);
+    dispatch(setBallot({ 
+      songId,
+      playlistId,
+      comments: ballot?.comments || ''
+    }));
   };
 
   const handleMouseEnter = () => {
@@ -30,21 +33,17 @@ const VoteCard: React.FC<VoteCardProps> = ({ song, onRadialSelect }) => {
     setIsHovered(false);
   };
 
+  if (!song || !artist) return null;
+
   return (
     <div
-      className={`p-3 border rounded cursor-pointer ${ballot?.songId === song.id ? 'bg-green-500' : ''}`}
+      className={`p-3 border rounded cursor-pointer ${ballot?.songId === songId ? 'bg-green-500' : ''}`}
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <input
-        type="radio"
-        name="vote"
-        checked={ballot?.songId === song.id}
-        onChange={handleRadialSelect}
-      />
       <div className={`${isHovered ? 'ml-4 transition-all duration-500' : ''}`}>
-        <strong>{song.title}</strong> by {song.artist}
+        <strong>{song.title}</strong> by {artist.name}
       </div>
     </div>
   );

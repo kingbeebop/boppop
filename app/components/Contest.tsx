@@ -30,38 +30,35 @@ const Contest: React.FC = () => {
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
+  const songIds = playlist?.songIds || [];
+
   return (
-    <div className="container mx-auto mt-8">
-      <div className="bg-gray-200 rounded-lg p-4">
-        <h2 className="text-4xl font-bold mb-2">
-          Bop Pop #{playlist?.number}
-        </h2>
-        <h3 className="text-2xl font-bold mb-4">
-          {playlist?.theme}
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {playlist?.songs.map((song: Song) => (
-            <VoteCard
-              key={song.id}
-              song={song}
-              onRadialSelect={handleRadialSelect}
-            />
-          ))}
-        </div>
-        <div className="mt-4">
-          <label htmlFor="comment">Comments:</label>
-          <textarea
-            id="comment"
-            value={comment}
-            onChange={handleCommentChange}
-            className="block w-full p-2 border rounded"
-            rows={4}
+    <div className="container mx-auto px-4 py-8">
+      <h3 className="text-2xl font-bold mb-4">
+        {playlist?.theme}
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {songIds.map((songId) => (
+          <VoteCard
+            key={songId}
+            songId={songId}
+            playlistId={playlist?.id || ''}
           />
-        </div>
-        <button onClick={handleSubmit} className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-          Submit
-        </button>
+        ))}
       </div>
+      <div className="mt-4">
+        <label htmlFor="comment">Comments:</label>
+        <textarea
+          id="comment"
+          value={comment}
+          onChange={handleCommentChange}
+          className="block w-full p-2 border rounded"
+          rows={4}
+        />
+      </div>
+      <button onClick={handleSubmit} className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        Submit
+      </button>
     </div>
   );
 };

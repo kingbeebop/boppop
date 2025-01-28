@@ -1,5 +1,5 @@
 import { baseFetch } from '../fetch';
-import { Login, AuthResponse, Artist, Registration } from '../../types';
+import { Login, AuthResponse, Registration, User } from '../../types';
 
 export async function loginUser(data: Login): Promise<AuthResponse> {
   return baseFetch<AuthResponse>('/auth/jwt/login', {
@@ -40,8 +40,8 @@ export async function validateToken(): Promise<boolean> {
   }
 }
 
-export async function getUser(): Promise<Artist> {
-  return baseFetch<Artist>('/users/me', {
+export async function getUser(): Promise<User> {
+  return baseFetch<User>('/users/me', {
     method: 'GET',
     protected: true,
   });
@@ -65,13 +65,17 @@ export async function resetPassword(email: string): Promise<void> {
   });
 }
 
-export async function attemptTokenLogin(): Promise<Artist | null> {
+export async function attemptTokenLogin(): Promise<User | null> {
   try {
-    const isValid = await validateToken();
-    if (isValid) {
-      return await getUser();
-    }
+    const tokenValue = localStorage.getItem('token');
+    if (!tokenValue) return null;
 
+    const response = await baseFetch<User>('/auth/me', {
+      protected: true
+    });
+    return response;
+  } catch (error) {
+    // Handle token refresh or return null
     const refreshTokenValue = getRefreshToken();
     if (refreshTokenValue) {
       const response = await refreshToken(refreshTokenValue);
@@ -81,9 +85,6 @@ export async function attemptTokenLogin(): Promise<Artist | null> {
         return await getUser();
       }
     }
-    return null;
-  } catch (error) {
-    console.error('Token login failed:', error);
     return null;
   }
 }

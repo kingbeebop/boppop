@@ -10,9 +10,9 @@ import artistReducer from './slices/artistSlice';
 const store = configureStore({
   reducer: {
     auth: authReducer,
-    artist: artistReducer,
+    artists: artistReducer,
     playlists: playlistReducer,
-    song: songReducer,
+    songs: songReducer,
     challenge: challengeReducer,
     submission: submissionReducer,
     contest: contestReducer,

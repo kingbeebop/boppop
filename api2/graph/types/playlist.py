@@ -6,6 +6,23 @@ from strawberry.scalars import ID
 from .song import Song
 
 @strawberry_type
+class PlaylistFilter:
+    theme: Optional[str] = None
+    active: Optional[bool] = None
+    contest: Optional[bool] = None
+
+@strawberry_type
+class PlaylistEdge:
+    node: "Playlist"
+    cursor: str
+
+@strawberry_type
+class PlaylistConnection:
+    edges: List[PlaylistEdge]
+    pageInfo: "PageInfo"
+    totalCount: int
+
+@strawberry_type
 class Playlist:
     id: ID
     number: int

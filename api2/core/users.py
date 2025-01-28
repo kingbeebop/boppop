@@ -171,6 +171,17 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
 
         return updated_user
 
+    async def get_with_artist(self, user_id: int) -> Optional[User]:
+        """Get user with artist relationship loaded"""
+        async with AsyncSession() as session:
+            stmt = (
+                select(User)
+                .options(selectinload(User.artist))
+                .filter(User.id == user_id)
+            )
+            result = await session.execute(stmt)
+            return result.scalar_one_or_none()
+
 async def get_user_db(session: AsyncSession = Depends(get_db)):
     yield SQLAlchemyUserDatabase(session, User)
 

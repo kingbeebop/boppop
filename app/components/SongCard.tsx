@@ -2,26 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
 import { setSelectedSong } from '../redux/slices/songSlice';
-import { Song } from '../types';
 import { ListItemButton, ListItemText, ListItemIcon } from '@mui/material';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 
 interface SongCardProps {
-  song: Song;
+  songId: string;
 }
 
-const SongCard: React.FC<SongCardProps> = ({ song }) => {
+const SongCard: React.FC<SongCardProps> = ({ songId }) => {
   const dispatch = useDispatch();
-  const selectedSong = useSelector((state: RootState) => state.song.selectedSong);
+  const song = useSelector((state: RootState) => state.songs.byId[songId]);
+  const selectedSongId = useSelector((state: RootState) => state.songs.selectedSongId);
   const [isSelected, setIsSelected] = useState(false);
 
   useEffect(() => {
-    setIsSelected(selectedSong?.id === song.id);
-  }, [selectedSong?.id, song.id]);
+    setIsSelected(selectedSongId === songId);
+  }, [selectedSongId, songId]);
 
   const handleClick = () => {
-    dispatch(setSelectedSong(song));
+    dispatch(setSelectedSong(songId));
   };
+
+  if (!song) return null;
 
   return (
     <ListItemButton
@@ -43,7 +45,7 @@ const SongCard: React.FC<SongCardProps> = ({ song }) => {
       </ListItemIcon>
       <ListItemText
         primary={song.title}
-        secondary={song.artist}
+        secondary={song.artistName}
         primaryTypographyProps={{
           fontWeight: isSelected ? 600 : 400,
         }}

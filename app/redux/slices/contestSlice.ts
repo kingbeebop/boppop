@@ -14,7 +14,7 @@ const initialState: ContestState = {
   loading: false,
   error: null,
   playlist: null,
-  ballot: { songId: null, comments: '' },
+  ballot: { songId: null, comments: '', playlistId: '' },
 };
 
 // Async thunk to fetch contest data

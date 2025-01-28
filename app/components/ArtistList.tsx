@@ -1,45 +1,84 @@
 // components/ArtistList.tsx
 
-import React from 'react';
-import { useRouter } from 'next/router';
-import { useSelector } from 'react-redux';
-import { Box, Typography, Container } from '@mui/material';
-import { RootState } from '../redux/store';
-import SelectableList, { SelectableItem } from './common/SelectableList';
-import { Artist } from '../types';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch } from '../redux/store';
+import { fetchArtists, selectArtists, selectArtistsState, setSearch } from '../redux/slices/artistSlice';
+import { Box, Button, CircularProgress, TextField, Typography } from '@mui/material';
+import ArtistCard from './ArtistCard';
 
 const ArtistList: React.FC = () => {
-  const router = useRouter();
-  const { artists, loading } = useSelector((state: RootState) => state.artist);
+  const dispatch = useDispatch<AppDispatch>();
+  const artists = useSelector(selectArtists);
+  const { loading, error, search, hasNextPage, endCursor } = useSelector(selectArtistsState);
 
-  const artistItems: SelectableItem[] = artists.map((artist: Artist) => ({
-    id: artist.id,
-    title: artist.username,
-    subtitle: artist.bio ?? 'No bio available',
-    imageUrl: artist.profile_pic ?? undefined,
-    data: artist,
-  }));
+  useEffect(() => {
+    const loadArtists = async () => {
+      try {
+        await dispatch(fetchArtists({ first: 10 })).unwrap();
+      } catch (err) {
+        console.error('Failed to load artists:', err);
+      }
+    };
+    loadArtists();
+  }, [dispatch]);
 
-  const handleSelect = (item: SelectableItem) => {
-    router.push(`/artists/${item.id}`);
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newSearch = event.target.value;
+    dispatch(setSearch(newSearch));
+    dispatch(fetchArtists({ first: 10, search: newSearch }));
   };
 
+  const handleLoadMore = () => {
+    dispatch(fetchArtists({ 
+      first: 10, 
+      after: endCursor ?? undefined,
+      search
+    }));
+  };
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
   return (
-    <Container maxWidth="md">
-      <Box sx={{ py: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Artists
-        </Typography>
-        <SelectableList
-          items={artistItems}
-          onSelect={handleSelect}
-          isLoading={loading}
-          showAvatar
-          emptyMessage="No artists found yet"
-          sx={{ mt: 3 }}
-        />
-      </Box>
-    </Container>
+    <Box>
+      <TextField
+        fullWidth
+        label="Search Artists"
+        value={search}
+        onChange={handleSearchChange}
+        margin="normal"
+      />
+
+      {loading ? (
+        <Box display="flex" justifyContent="center" mt={2}>
+          <CircularProgress />
+        </Box>
+      ) : artists.length === 0 ? (
+        <Box display="flex" justifyContent="center" mt={4}>
+          <Typography color="text.secondary">
+            {search ? 'No artists found matching your search' : 'No artists available'}
+          </Typography>
+        </Box>
+      ) : (
+        <>
+          <Box display="grid" gridTemplateColumns="repeat(auto-fill, minmax(250px, 1fr))" gap={2}>
+            {artists.map((artist) => (
+              <ArtistCard key={artist.id} artist={artist} />
+            ))}
+          </Box>
+
+          {hasNextPage && (
+            <Box display="flex" justifyContent="center" mt={2}>
+              <Button onClick={handleLoadMore} variant="contained">
+                Load More
+              </Button>
+            </Box>
+          )}
+        </>
+      )}
+    </Box>
   );
 };
 

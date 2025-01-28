@@ -8,7 +8,7 @@ interface ChallengeState {
   theme: string | null;
   number: number | null;
   winner: Artist | null;
-  playlist_id: number | null;
+  playlist_id: string | null;
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
 }

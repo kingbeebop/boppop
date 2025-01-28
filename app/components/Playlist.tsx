@@ -1,18 +1,26 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../redux/store';
+import { AppDispatch, RootState } from '../redux/store';
 import { fetchPlaylist } from '../redux/slices/playlistSlice';
 import SongCard from './SongCard';
-import { Song } from '../types';
+import { 
+  Box, 
+  Typography, 
+  CircularProgress, 
+  Stack,
+  Container
+} from '@mui/material';
+import { formatDate } from '../utils/date';
 
 interface PlaylistProps {
   id: number;
 }
 
 const Playlist: React.FC<PlaylistProps> = ({ id }) => {
-  const dispatch = useDispatch<any>();
-  const { loading, error } = useSelector((state: RootState) => state.playlists);
-  const playlist = useSelector((state: RootState) => state.playlists.playlists.find(p => p.id === id));
+  const dispatch = useDispatch<AppDispatch>();
+  const playlist = useSelector((state: RootState) => state.playlists.byId[id]);
+  const loading = useSelector((state: RootState) => state.playlists.loading);
+  const error = useSelector((state: RootState) => state.playlists.error);
 
   useEffect(() => {
     if (!playlist) {
@@ -20,28 +28,48 @@ const Playlist: React.FC<PlaylistProps> = ({ id }) => {
     }
   }, [dispatch, id, playlist]);
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box p={2}>
+        <Typography color="error">{error}</Typography>
+      </Box>
+    );
+  }
+
+  if (!playlist) {
+    return null;
+  }
 
   return (
-    <div className="container mx-auto mt-8">
-      <div className="bg-gray-200 rounded-lg p-4">
-        <h2 className="text-4xl font-bold mb-2">
-          Bop Pop #{playlist?.number}
-        </h2>
-        <h3 className="text-2xl font-bold mb-4">
-          {playlist?.theme}
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {playlist?.songs.map((song: Song) => (
-            <SongCard
-              key={song.id}
-              song={song}
-            />
+    <Container maxWidth="lg">
+      <Stack spacing={4} py={4}>
+        <Box>
+          <Typography variant="h4" component="h1" gutterBottom>
+            Bop Pop #{playlist.number}
+          </Typography>
+          <Typography variant="h5" color="text.secondary" gutterBottom>
+            {playlist.theme}
+          </Typography>
+          <Typography variant="subtitle1" color="text.secondary">
+            {formatDate(playlist.date)}
+          </Typography>
+        </Box>
+
+        <Stack spacing={2}>
+          {playlist.songIds.map((songId) => (
+            <SongCard key={songId} songId={songId} />
           ))}
-        </div>
-      </div>
-    </div>
+        </Stack>
+      </Stack>
+    </Container>
   );
 };
 

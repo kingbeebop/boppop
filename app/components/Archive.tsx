@@ -1,58 +1,84 @@
-
-
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchPlaylists, selectPlaylists } from '../redux/slices/playlistSlice';
-import ChallengeList from './ChallengeList';
+import { AppDispatch } from '../redux/store';
+import { 
+  fetchPlaylists, 
+  selectPlaylists,
+  selectPlaylistsState,
+  setSearch
+} from '../redux/slices/playlistSlice';
+import { 
+  Box, 
+  TextField, 
+  Button,
+  CircularProgress
+} from '@mui/material';
+import PlaylistCard from './PlaylistCard';
 
 const Archive: React.FC = () => {
-  const dispatch = useDispatch<any>();
-  const { loading, error, currentPage, limit, search, count } = useSelector(selectPlaylists);
-  const [searchTerm, setSearchTerm] = useState('');
-  const totalPages = Math.ceil(count / limit);
+  const dispatch = useDispatch<AppDispatch>();
+  const playlists = useSelector(selectPlaylists);
+  const { loading, error, search, hasNextPage, endCursor } = useSelector(selectPlaylistsState);
 
   useEffect(() => {
-    dispatch(fetchPlaylists({ limit, page: 1, search }));
-  }, [dispatch, limit, search]);
+    const loadPlaylists = async () => {
+      try {
+        await dispatch(fetchPlaylists({ first: 10 })).unwrap();
+      } catch (err) {
+        console.error('Failed to load playlists:', err);
+      }
+    };
+    loadPlaylists();
+  }, [dispatch]);
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newSearch = event.target.value;
+    dispatch(setSearch(newSearch));
+    dispatch(fetchPlaylists({ first: 10, search: newSearch }));
+  };
 
   const handleLoadMore = () => {
-    if (currentPage < totalPages) {
-      dispatch(fetchPlaylists({ limit, page: currentPage + 1, search }));
-    }
+    dispatch(fetchPlaylists({ 
+      first: 10, 
+      after: endCursor ?? undefined,
+      search
+    }));
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const handleSearchSubmit = () => {
-    dispatch(fetchPlaylists({ limit, page: 1, search: searchTerm }));
-  };
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   return (
-    <div>
-      <h1 className="centered-title">Bop Pop Archive</h1>
-      <input
-        type="text"
-        placeholder="Search by ID or Theme"
-        value={searchTerm}
+    <Box>
+      <TextField
+        fullWidth
+        label="Search Playlists"
+        value={search}
         onChange={handleSearchChange}
-        style = {{color: 'black'}}
+        margin="normal"
       />
-      <button onClick={handleSearchSubmit}>Search</button>
-      {loading ? (
-        <div>Loading...</div>
-      ) : error ? (
-        <div>Error: {error}</div>
-      ) : (
-        <React.Fragment>
-          <ChallengeList />
-          {currentPage < totalPages && (
-            <button onClick={handleLoadMore}>Load More</button>
-          )}
-        </React.Fragment>
+
+      <Box display="grid" gridTemplateColumns="repeat(auto-fill, minmax(250px, 1fr))" gap={2}>
+        {playlists.map((playlist) => (
+          <PlaylistCard key={playlist.id} playlist={playlist} />
+        ))}
+      </Box>
+
+      {loading && (
+        <Box display="flex" justifyContent="center" mt={2}>
+          <CircularProgress />
+        </Box>
       )}
-    </div>
+
+      {hasNextPage && !loading && (
+        <Box display="flex" justifyContent="center" mt={2}>
+          <Button onClick={handleLoadMore} variant="contained">
+            Load More
+          </Button>
+        </Box>
+      )}
+    </Box>
   );
 };
 

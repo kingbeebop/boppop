@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
 import {
   Box,
   Paper,
@@ -11,162 +13,106 @@ import {
   Container,
   Stack,
 } from '@mui/material';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
 import { registerUser } from '../services/api';
 
-// Validation schema
 const validationSchema = Yup.object({
-  username: Yup.string()
-    .min(3, 'Username must be at least 3 characters')
-    .max(20, 'Username must be less than 20 characters')
-    .required('Username is required'),
   email: Yup.string()
     .email('Invalid email address')
     .required('Email is required'),
-  password1: Yup.string()
+  username: Yup.string()
+    .min(3, 'Username must be at least 3 characters')
+    .required('Username is required'),
+  password: Yup.string()
     .min(8, 'Password must be at least 8 characters')
-    .matches(/[a-zA-Z]/, 'Password must contain at least one letter')
-    .matches(/[0-9]/, 'Password must contain at least one number')
     .required('Password is required'),
-  password2: Yup.string()
-    .oneOf([Yup.ref('password1')], 'Passwords must match')
+  confirmPassword: Yup.string()
+    .oneOf([Yup.ref('password')], 'Passwords must match')
     .required('Please confirm your password'),
 });
 
-const Registration: React.FC = () => {
+const Registration = () => {
   const router = useRouter();
-  const [serverError, setServerError] = useState<string | null>(null);
-  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const formik = useFormik({
     initialValues: {
-      username: '',
       email: '',
-      password1: '',
-      password2: '',
+      username: '',
+      password: '',
+      confirmPassword: '',
     },
     validationSchema,
-    onSubmit: async (values, { setSubmitting }) => {
+    onSubmit: async (values) => {
       try {
-        setServerError(null);
-        await registerUser(
-          {username: values.username,
-          password: values.password1,
-          password2: values.password2,
-          email: values.email}
-        );
-        setRegistrationSuccess(true);
-        setTimeout(() => {
-          router.push('/'); // Redirect to home page after successful registration
-        }, 2000);
-      } catch (error: any) {
-        setServerError(
-          error.response?.data?.message || 'An error occurred during registration'
-        );
-      } finally {
-        setSubmitting(false);
+        // Only send email, username, and password to API
+        const { confirmPassword, ...registrationData } = values;
+        await registerUser(registrationData);
+        router.push('/login');
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Registration failed');
       }
     },
   });
 
   return (
     <Container maxWidth="sm">
-      <Box sx={{ mt: 4, mb: 4 }}>
+      <Box sx={{ mt: 8, mb: 4 }}>
         <Paper elevation={3} sx={{ p: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom align="center">
-            Create Account
-          </Typography>
-
-          {registrationSuccess ? (
-            <Alert severity="success" sx={{ mb: 2 }}>
-              Registration successful! Redirecting...
-            </Alert>
-          ) : (
-            <form onSubmit={formik.handleSubmit}>
-              <Stack spacing={3}>
-                {serverError && (
-                  <Alert severity="error" sx={{ mb: 2 }}>
-                    {serverError}
-                  </Alert>
-                )}
-
-                <TextField
-                  fullWidth
-                  id="username"
-                  name="username"
-                  label="Username"
-                  value={formik.values.username}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.username && Boolean(formik.errors.username)}
-                  helperText={formik.touched.username && formik.errors.username}
-                />
-
-                <TextField
-                  fullWidth
-                  id="email"
-                  name="email"
-                  label="Email"
-                  type="email"
-                  value={formik.values.email}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.email && Boolean(formik.errors.email)}
-                  helperText={formik.touched.email && formik.errors.email}
-                />
-
-                <TextField
-                  fullWidth
-                  id="password1"
-                  name="password1"
-                  label="Password"
-                  type="password"
-                  value={formik.values.password1}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.password1 && Boolean(formik.errors.password1)}
-                  helperText={formik.touched.password1 && formik.errors.password1}
-                />
-
-                <TextField
-                  fullWidth
-                  id="password2"
-                  name="password2"
-                  label="Confirm Password"
-                  type="password"
-                  value={formik.values.password2}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.password2 && Boolean(formik.errors.password2)}
-                  helperText={formik.touched.password2 && formik.errors.password2}
-                />
-
-                <Button
-                  fullWidth
-                  variant="contained"
-                  type="submit"
-                  disabled={formik.isSubmitting}
-                  sx={{ mt: 2 }}
-                >
-                  {formik.isSubmitting ? (
-                    <CircularProgress size={24} color="inherit" />
-                  ) : (
-                    'Register'
-                  )}
-                </Button>
-
-                <Button
-                  fullWidth
-                  variant="text"
-                  onClick={() => router.push('/login')}
-                  sx={{ mt: 1 }}
-                >
-                  Already have an account? Login
-                </Button>
-              </Stack>
-            </form>
-          )}
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          <form onSubmit={formik.handleSubmit}>
+            <Stack spacing={2}>
+              <TextField
+                fullWidth
+                id="email"
+                name="email"
+                label="Email"
+                value={formik.values.email}
+                onChange={formik.handleChange}
+                error={formik.touched.email && Boolean(formik.errors.email)}
+                helperText={formik.touched.email && formik.errors.email}
+              />
+              <TextField
+                fullWidth
+                id="username"
+                name="username"
+                label="Username"
+                value={formik.values.username}
+                onChange={formik.handleChange}
+                error={formik.touched.username && Boolean(formik.errors.username)}
+                helperText={formik.touched.username && formik.errors.username}
+              />
+              <TextField
+                fullWidth
+                id="password"
+                name="password"
+                label="Password"
+                type="password"
+                value={formik.values.password}
+                onChange={formik.handleChange}
+                error={formik.touched.password && Boolean(formik.errors.password)}
+                helperText={formik.touched.password && formik.errors.password}
+              />
+              <TextField
+                fullWidth
+                id="confirmPassword"
+                name="confirmPassword"
+                label="Confirm Password"
+                type="password"
+                value={formik.values.confirmPassword}
+                onChange={formik.handleChange}
+                error={formik.touched.confirmPassword && Boolean(formik.errors.confirmPassword)}
+                helperText={formik.touched.confirmPassword && formik.errors.confirmPassword}
+              />
+              <Button
+                fullWidth
+                variant="contained"
+                type="submit"
+                disabled={formik.isSubmitting}
+              >
+                {formik.isSubmitting ? <CircularProgress size={24} /> : 'Register'}
+              </Button>
+            </Stack>
+          </form>
         </Paper>
       </Box>
     </Container>

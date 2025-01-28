@@ -4,90 +4,91 @@ import React, { useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../redux/store';
+import { AppDispatch, RootState } from '../redux/store';
 import { fetchArtist } from '../redux/slices/artistSlice';
+import { Box, Typography, CircularProgress, Avatar } from '@mui/material';
 
 const ArtistPage: React.FC = () => {
   const router = useRouter();
-  const { id } = router.query;
-  const dispatch = useDispatch<any>();
+  const dispatch = useDispatch<AppDispatch>();
   
-  // Convert id to number or null if it's not a valid number
-  const artistId = typeof id === 'string' ? parseInt(id, 10) : null;
-
-  const artist = useSelector((state: RootState) =>
-    state.artist.artists.find((artist) => artist.id === artistId)
+  // Get id from router and convert to number
+  const artistId = typeof router.query.id === 'string' ? parseInt(router.query.id, 10) : null;
+  
+  // Select artist from store using artistId
+  const artist = useSelector((state: RootState) => 
+    artistId ? state.artists.byId[artistId] : null
   );
+  const loading = useSelector((state: RootState) => state.artists.loading);
+  const error = useSelector((state: RootState) => state.artists.error);
 
   useEffect(() => {
-    if (artistId) {
+    if (artistId && !artist) {
       dispatch(fetchArtist(artistId));
     }
-  }, [artistId, dispatch]);
+  }, [artistId, artist, dispatch]);
 
-  if (artistId === null) {
-    return <div>Artist Not Found</div>;
+  if (!artistId) {
+    return (
+      <Box p={3}>
+        <Typography color="error">Invalid artist ID</Typography>
+      </Box>
+    );
+  }
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box p={3}>
+        <Typography color="error">{error}</Typography>
+      </Box>
+    );
   }
 
   if (!artist) {
-    return <div>Loading...</div>;
+    return (
+      <Box p={3}>
+        <Typography>Artist not found</Typography>
+      </Box>
+    );
   }
 
   return (
-    <div>
-      <h1>{artist.username}</h1>
-      {artist.profile_pic && (
-        <Image
-          src={artist.profile_pic}
-          alt="Profile Pic"
-          width={300}
-          height={300}
-        />
+    <Box p={3}>
+      <Box display="flex" alignItems="center" gap={3} mb={4}>
+        {artist.profilePic ? (
+          <Image 
+            src={artist.profilePic} 
+            alt={artist.name} 
+            width={100} 
+            height={100}
+            style={{ borderRadius: '50%' }}
+          />
+        ) : (
+          <Avatar sx={{ width: 100, height: 100 }}>
+            {artist.name[0].toUpperCase()}
+          </Avatar>
+        )}
+        <Box>
+          <Typography variant="h4">{artist.name}</Typography>
+        </Box>
+      </Box>
+
+      {artist.bio && (
+        <Box mb={4}>
+          <Typography variant="h6" gutterBottom>About</Typography>
+          <Typography>{artist.bio}</Typography>
+        </Box>
       )}
-      <p>{artist.bio}</p>
-    </div>
+    </Box>
   );
 };
 
 export default ArtistPage;
-
-// import React, { useEffect, useState } from 'react';
-// import { useRouter } from 'next/router';
-// import { fetchArtistByName } from '../utils/api';
-// // import Playlist from './Playlist';
-// import Image from 'next/image'; // Import Image from Next.js
-
-// const ArtistPage: React.FC = () => {
-//   const router = useRouter();
-//   const { name } = router.query;
-//   const [artistData, setArtistData] = useState<any>(null); // Update with actual types
-
-//   useEffect(() => {
-//     const fetchData = async () => {
-//       if (typeof name === 'string') {
-//         try {
-//           const data = await fetchArtistByName(name);
-//           setArtistData(data);
-//         } catch (error) {
-//           console.error('Error fetching artist data:', error);
-//         }
-//       }
-//     };
-
-//     fetchData();
-//   }, [name]);
-
-//   if (!artistData) {
-//     return <div>Loading...</div>;
-//   }
-
-//   return (
-//     <div>
-//       <h1>{artistData.name}</h1>
-//       <Image src={artistData.profile_pic} alt="Profile Pic" width={300} height={300} /> {/* Updated to use Image */}
-//       <p>{artistData.bio}</p>
-//     </div>
-//   );
-// };
-
-// export default ArtistPage;

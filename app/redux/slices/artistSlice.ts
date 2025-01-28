@@ -1,51 +1,51 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../store';
-import { getArtist, getArtists } from '../../services/api';
-import { Artist, ArtistResponse } from '../../types';
+import { getArtist, getArtists, GetArtistsParams } from '../../services/api';
+import { Artist } from '../../types';
 
 interface ArtistState {
-  artists: Artist[];
+  // A lookup table of artists by their ID
+  byId: Record<string, Artist>;  // e.g., { "1": { id: "1", name: "Test Artist", ... } }
+  
+  // An ordered array of artist IDs
+  allIds: string[];              // e.g., ["1", "2", "3"]
+  
+  // UI and pagination state
   loading: boolean;
   error: string | null;
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
-  limit: number;
   search: string;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  endCursor: string | null;
+  startCursor: string | null;
+  totalCount: number;
 }
 
 const initialState: ArtistState = {
-  artists: [],
+  byId: {},
+  allIds: [],
   loading: false,
   error: null,
-  currentPage: 1,
-  totalPages: 0,
-  totalItems: 0,
-  limit: 10,
   search: '',
+  hasNextPage: false,
+  hasPreviousPage: false,
+  endCursor: null,
+  startCursor: null,
+  totalCount: 0,
 };
+
+export const fetchArtists = createAsyncThunk(
+  'artists/fetchArtists',
+  async (params: GetArtistsParams) => {
+    return await getArtists(params);
+  }
+);
 
 export const fetchArtist = createAsyncThunk(
   'artists/fetchArtist',
   async (id: number) => {
-    try {
-      const response = await getArtist(id);
-      return response; // Return the fetched artist
-    } catch (error) {
-      throw new Error('Failed to fetch artist');
-    }
-  }
-);
-
-export const fetchArtists = createAsyncThunk(
-  'artists/fetchArtists',
-  async ({ limit, page, search }: { limit?: number; page?: number; search?: string }) => {
-    try {
-      const response = await getArtists({ limit: limit || 10, page: page || 1, search: search || '' });
-      return response; // Assuming API response has a 'results' property containing artists
-    } catch (error) {
-      throw new Error('Failed to fetch artists');
-    }
+    const response = await getArtist(id);
+    return response;
   }
 );
 
@@ -53,7 +53,9 @@ const artistSlice = createSlice({
   name: 'artists',
   initialState,
   reducers: {
-    // Add reducer logic if needed
+    setSearch: (state, action: PayloadAction<string>) => {
+      state.search = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -61,35 +63,46 @@ const artistSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchArtists.fulfilled, (state, action: PayloadAction<ArtistResponse>) => {
+      .addCase(fetchArtists.fulfilled, (state, action) => {
+        if (!action.payload?.artists) {
+          state.error = 'Invalid response format';
+          state.loading = false;
+          return;
+        }
+
         state.loading = false;
-        state.error = null;
-        state.artists = action.payload.items;
-        state.currentPage = action.payload.currentPage;
-        state.totalPages = action.payload.totalPages;
-        state.totalItems = action.payload.totalItems;
+        const { edges, pageInfo, totalCount } = action.payload.artists;
+        
+        edges.forEach(({ node }) => {
+          state.byId[node.id] = node;
+          if (!state.allIds.includes(node.id)) {
+            state.allIds.push(node.id);
+          }
+        });
+
+        state.hasNextPage = pageInfo.hasNextPage;
+        state.hasPreviousPage = pageInfo.hasPreviousPage;
+        state.startCursor = pageInfo.startCursor;
+        state.endCursor = pageInfo.endCursor;
+        state.totalCount = totalCount;
       })
       .addCase(fetchArtists.rejected, (state, action) => {
         state.loading = false;
-        state.error = 'Failed to fetch artists';
+        state.error = action.error.message || 'Failed to fetch artists';
       })
-      .addCase(fetchArtist.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchArtist.fulfilled, (state, action: PayloadAction<Artist>) => {
-        state.loading = false;
-        state.error = null;
-        state.artists.push(action.payload); // Add the fetched artist to state
-      })
-      .addCase(fetchArtist.rejected, (state, action) => {
-        state.loading = false;
-        state.error = 'Failed to fetch artist';
+      .addCase(fetchArtist.fulfilled, (state, action) => {
+        const artist = action.payload;
+        state.byId[artist.id] = artist;
+        if (!state.allIds.includes(artist.id)) {
+          state.allIds.push(artist.id);
+        }
       });
   },
 });
 
-export const selectArtist = (state: RootState) => state.artist;
+export const { setSearch } = artistSlice.actions;
+export const selectArtists = (state: RootState) => state.artists.allIds.map(id => state.artists.byId[id]);
+export const selectArtistById = (state: RootState, id: string) => state.artists.byId[id];
+export const selectArtistsState = (state: RootState) => state.artists;
 
-export const { reducer: artistReducer } = artistSlice;
-export default artistReducer;
+export default artistSlice.reducer;

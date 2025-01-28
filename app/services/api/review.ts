@@ -7,12 +7,19 @@ const REVIEW_FIELDS = `
   song {
     id
     title
+    url
   }
-  artist {
+  author {
     id
     username
+    name
+  }
+  playlist {
+    id
+    number
   }
   created_at
+  updated_at
 `;
 
 export async function getReviews(songId: number): Promise<Review[]> {

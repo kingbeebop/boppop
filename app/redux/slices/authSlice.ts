@@ -1,9 +1,9 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { loginUser as loginUserApi, logoutUser as logoutUserApi, attemptTokenLogin } from '../../services/api';
-import { Login, Artist } from '../../types';
+import { Login, User } from '../../types';
 
 export interface AuthState {
-  user: { username: string } | null;
+  user: User | null;
   loading: boolean;
   error: string | null;
 }
@@ -18,7 +18,13 @@ export const login = createAsyncThunk(
   'auth/login',
   async (data: Login) => {
     const response = await loginUserApi(data);
-    return response.user;
+    // Store tokens
+    if (response.access_token) {
+      localStorage.setItem('token', response.access_token);
+      localStorage.setItem('refresh_token', response.refresh_token);
+    }
+    // Get user data after successful login
+    return await attemptTokenLogin();
   }
 );
 
@@ -26,17 +32,15 @@ export const logout = createAsyncThunk(
   'auth/logout',
   async () => {
     await logoutUserApi();
+    localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
   }
 );
 
 export const checkAuthStatus = createAsyncThunk(
-  'auth/checkAuthStatus',
-  async (_, { dispatch }) => {
-    const user = await attemptTokenLogin();
-    if (user) {
-      dispatch(updateUserData(user));
-    }
-    return user;
+  'auth/checkStatus',
+  async () => {
+    return await attemptTokenLogin();
   }
 );
 
@@ -44,8 +48,8 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    updateUserData: (state, action: PayloadAction<Artist>) => {
-      state.user = { username: action.payload.username };
+    updateUserData: (state, action: PayloadAction<User>) => {
+      state.user = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -62,10 +66,6 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || 'Login failed';
       })
-      .addCase(logout.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
       .addCase(logout.fulfilled, (state) => {
         state.loading = false;
         state.user = null;
@@ -80,9 +80,7 @@ const authSlice = createSlice({
       })
       .addCase(checkAuthStatus.fulfilled, (state, action) => {
         state.loading = false;
-        if (action.payload) {
-          state.user = { username: action.payload.username };
-        }
+        state.user = action.payload;
       })
       .addCase(checkAuthStatus.rejected, (state) => {
         state.loading = false;

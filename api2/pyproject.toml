@@ -8,19 +8,19 @@ authors = ["Your Name <your.email@example.com>"]
 python = "^3.11"
 fastapi = "^0.104.1"
 strawberry-graphql = {extras = ["fastapi"], version = "0.257.0"}
-uvicorn = {extras = ["standard"], version = "^0.24.0"}
-sqlalchemy = {extras = ["asyncio"], version = "^2.0.37"}
+uvicorn = {version = "^0.24.0", extras = ["standard"]}
+sqlalchemy = {version = "^2.0.23", extras = ["asyncio"]}
 psycopg2-binary = "^2.9.9"
-python-jose = {extras = ["cryptography"], version = "^3.3.0"}
-passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+python-jose = {version = "^3.3.0", extras = ["cryptography"]}
+passlib = {version = "^1.7.4", extras = ["bcrypt"]}
 python-multipart = "^0.0.20"
 python-dotenv = "^1.0.0"
 alembic = "^1.12.1"
-pydantic = {extras = ["email"], version = "^2.4.2"}
+pydantic = "^2.4.2"
 pydantic-settings = "^2.0.3"
 redis = {extras = ["hiredis"], version = "^5.0.1"}
 requests = "^2.31.0"
-fastapi-users = {extras = ["sqlalchemy"], version = "^14.0.1"}
+fastapi-users = {version = "^14.0.1", extras = ["sqlalchemy"]}
 asyncpg = "^0.30.0"
 
 [build-system]

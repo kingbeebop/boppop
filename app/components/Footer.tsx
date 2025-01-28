@@ -4,7 +4,10 @@ import { RootState } from '../redux/store';
 import Playhead from './Playhead';
 
 const Footer: React.FC = () => {
-  const selectedSong = useSelector((state: RootState) => state.song.selectedSong);
+  const selectedSongId = useSelector((state: RootState) => state.songs.selectedSongId);
+  const selectedSong = useSelector((state: RootState) => 
+    selectedSongId ? state.songs.byId[selectedSongId] : null
+  );
 
   if (!selectedSong) {
     return null;

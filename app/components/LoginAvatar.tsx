@@ -1,73 +1,138 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { useRouter } from 'next/router';
 import { AppDispatch, RootState } from '../redux/store';
-import { 
-  Avatar, 
-  Menu, 
-  MenuItem, 
-  ListItemIcon, 
-  ListItemText 
+import { logout } from '../redux/slices/authSlice';
+import {
+  Avatar,
+  IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Tooltip,
 } from '@mui/material';
-import { 
+import {
   Settings as SettingsIcon,
   Logout as LogoutIcon,
-  Login
+  Login as LoginIcon,
 } from '@mui/icons-material';
-import { useTheme } from '@mui/material/styles';
-import { logout } from '../redux/slices/authSlice';
+import Login from './Login';
 
-export const LoginAvatar = () => {
-  const theme = useTheme();
+function stringToColor(string: string) {
+  let hash = 0;
+  for (let i = 0; i < string.length; i++) {
+    hash = string.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  let color = '#';
+  for (let i = 0; i < 3; i++) {
+    const value = (hash >> (i * 8)) & 0xff;
+    color += `00${value.toString(16)}`.slice(-2);
+  }
+  return color;
+}
+
+export const LoginAvatar: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const router = useRouter();
   const user = useSelector((state: RootState) => state.auth.user);
+  const artist = useSelector((state: RootState) => 
+    user?.artistId ? state.artists.byId[user.artistId] : null
+  );
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [loginOpen, setLoginOpen] = useState(false);
 
-  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+  const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
-  const handleClose = () => {
+  const handleCloseMenu = () => {
     setAnchorEl(null);
   };
 
   const handleLogout = async () => {
-    dispatch(logout());
-    handleClose();
+    try {
+      await dispatch(logout()).unwrap();
+      handleCloseMenu();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
+  const handleSettings = () => {
+    router.push('/settings');
+    handleCloseMenu();
   };
 
   if (!user) {
     return (
-      <Login />
+      <>
+        <Tooltip title="Login">
+          <IconButton onClick={() => setLoginOpen(true)} size="small" sx={{ ml: 2 }}>
+            <LoginIcon />
+          </IconButton>
+        </Tooltip>
+        <Login open={loginOpen} onClose={() => setLoginOpen(false)} />
+      </>
     );
   }
 
-  // TODO: Add profile picture support
-  // Will need to:
-  // 1. Add profile pic field to user model
-  // 2. Add profile pic upload functionality in settings
-  // 3. Update Avatar to use src={user.profilePic} when available
+  const avatarProps = artist?.profilePic
+    ? {
+        src: artist.profilePic,
+        alt: artist.name,
+      }
+    : {
+        sx: {
+          bgcolor: stringToColor(artist?.name || user.username),
+        },
+        children: (artist?.name || user.username)[0].toUpperCase(),
+      };
+
   return (
     <>
-      <Avatar
-        onClick={handleClick}
-        sx={{
-          bgcolor: theme.palette.primary.main,
-          cursor: 'pointer',
-          width: 40,
-          height: 40,
-        }}
-      >
-        {user.username.charAt(0).toUpperCase()}
-      </Avatar>
+      <Tooltip title="Account settings">
+        <IconButton
+          onClick={handleOpenMenu}
+          size="small"
+          sx={{ ml: 2 }}
+          aria-controls={Boolean(anchorEl) ? 'account-menu' : undefined}
+          aria-haspopup="true"
+          aria-expanded={Boolean(anchorEl) ? 'true' : undefined}
+        >
+          <Avatar {...avatarProps} />
+        </IconButton>
+      </Tooltip>
       <Menu
         anchorEl={anchorEl}
+        id="account-menu"
         open={Boolean(anchorEl)}
-        onClose={handleClose}
-        onClick={handleClose}
+        onClose={handleCloseMenu}
+        onClick={handleCloseMenu}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        PaperProps={{
+          elevation: 0,
+          sx: {
+            overflow: 'visible',
+            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+            mt: 1.5,
+            '&:before': {
+              content: '""',
+              display: 'block',
+              position: 'absolute',
+              top: 0,
+              right: 14,
+              width: 10,
+              height: 10,
+              bgcolor: 'background.paper',
+              transform: 'translateY(-50%) rotate(45deg)',
+              zIndex: 0,
+            },
+          },
+        }}
       >
-        <MenuItem onClick={() => window.location.href = '/settings'}>
+        <MenuItem onClick={handleSettings}>
           <ListItemIcon>
             <SettingsIcon fontSize="small" />
           </ListItemIcon>
@@ -83,3 +148,5 @@ export const LoginAvatar = () => {
     </>
   );
 };
+
+export default LoginAvatar;
