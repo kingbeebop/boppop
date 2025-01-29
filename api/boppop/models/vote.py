@@ -9,4 +9,4 @@ class Vote(models.Model):
         unique_together = ['artist', 'playlist']
 
     def __str__(self):
-        return f"{self.artist.username} voted for {self.song.title} in {self.playlist.name}"
+        return f"{self.artist.name} voted for {self.song.title} in {self.playlist.name}"

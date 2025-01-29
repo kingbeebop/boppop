@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import DateTime, func
+from sqlalchemy import DateTime, func, Column
 
 class Base(DeclarativeBase):
     """Base class for all models"""
@@ -30,4 +30,9 @@ class TimeStampedBase(Base):
             if key not in ['created_at', 'updated_at']:
                 value = getattr(self, key)
                 attrs.append(f"{key}={value!r}")
-        return f"{self.__class__.__name__}({', '.join(attrs)})" 
+        return f"{self.__class__.__name__}({', '.join(attrs)})"
+
+class TimestampMixin:
+    """Mixin that adds created_at and updated_at columns to a table."""
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False) 

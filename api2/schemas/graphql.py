@@ -5,8 +5,16 @@ from enum import Enum
 from sqlalchemy import select, or_, func, and_
 from sqlalchemy.orm import selectinload
 from db.session import AsyncSessionLocal
-from models import User, Artist as ArtistModel, Song, Playlist, Review, Vote
+from models import User, Artist as ArtistModel, Song, Review, Vote
 from .utils import encode_cursor, decode_cursor
+from graph.types.playlist import (
+    Playlist,
+    PlaylistConnection,
+    PlaylistFilter,
+    PlaylistEdge,
+    PageInfo
+)
+from graph.types.artist import Artist  # Import Artist from graph.types.artist
 
 @strawberry.type
 class UserType:
@@ -142,23 +150,6 @@ class PlaylistSortField(Enum):
     NUMBER = "number"
 
 @strawberry.type
-class PageInfo:
-    hasNextPage: bool
-    hasPreviousPage: bool
-    startCursor: Optional[str]
-    endCursor: Optional[str]
-
-@strawberry.type
-class Artist:
-    id: strawberry.ID
-    name: str
-    bio: Optional[str]
-    profilePic: Optional[str]
-    songIds: List[strawberry.ID]
-    createdAt: datetime
-    updatedAt: datetime
-
-@strawberry.type
 class ArtistEdge:
     node: Artist
     cursor: str
@@ -174,23 +165,6 @@ class ArtistFilter:
     search: Optional[str] = strawberry.field(default=None)
     sortBy: Optional[ArtistSortField] = strawberry.field(default=ArtistSortField.NAME)
     sortDirection: Optional[SortDirection] = strawberry.field(default=SortDirection.ASC)
-
-@strawberry.type
-class PlaylistEdge:
-    node: PlaylistType
-    cursor: str
-
-@strawberry.type
-class PlaylistConnection:
-    edges: List[PlaylistEdge]
-    pageInfo: PageInfo
-    totalCount: int
-
-@strawberry.input
-class PlaylistFilter:
-    search: Optional[str] = strawberry.field(default=None)
-    sortBy: Optional[PlaylistSortField] = strawberry.field(default=PlaylistSortField.DATE)
-    sortDirection: Optional[SortDirection] = strawberry.field(default=SortDirection.DESC)
 
 @strawberry.type
 class Query:
@@ -236,15 +210,7 @@ class Query:
 
             edges = [
                 ArtistEdge(
-                    node=Artist(
-                        id=str(artist.id),
-                        name=artist.name,
-                        bio=artist.bio,
-                        profilePic=artist.profile_pic,
-                        songIds=[str(song.id) for song in artist.songs],
-                        createdAt=artist.created_at,
-                        updatedAt=artist.updated_at
-                    ),
+                    node=Artist.from_db(artist),
                     cursor=encode_cursor(str(artist.id))
                 ) for artist in artists
             ]
@@ -263,66 +229,12 @@ class Query:
     @strawberry.field
     async def playlists(
         self,
+        info: strawberry.types.Info,
         first: Optional[int] = 10,
         after: Optional[str] = None,
         filter: Optional[PlaylistFilter] = None
     ) -> PlaylistConnection:
-        async with AsyncSessionLocal() as session:
-            query = select(Playlist)
-
-            if filter and filter.search:
-                query = query.where(Playlist.theme.ilike(f"%{filter.search}%"))
-
-            if filter and filter.sortBy:
-                column = getattr(Playlist, filter.sortBy.value)
-                if filter.sortDirection == SortDirection.DESC:
-                    column = column.desc()
-                query = query.order_by(column)
-            else:
-                query = query.order_by(Playlist.date.desc())
-
-            count_query = select(func.count()).select_from(query.subquery())
-            total_count = await session.scalar(count_query)
-
-            if after:
-                cursor_date = decode_cursor(after)
-                query = query.where(Playlist.date < cursor_date)
-
-            query = query.limit(first + 1)
-            result = await session.execute(query)
-            playlists = result.scalars().all()
-
-            has_next_page = len(playlists) > first
-            playlists = playlists[:first]
-
-            edges = [
-                PlaylistEdge(
-                    node=PlaylistType(
-                        id=str(playlist.id),
-                        number=playlist.number,
-                        theme=playlist.theme,
-                        date=playlist.date,
-                        active=playlist.active,
-                        contest=playlist.contest,
-                        winnerId=str(playlist.winner_id) if playlist.winner_id else None,
-                        songIds=[str(song.id) for song in playlist.songs],
-                        createdAt=playlist.created_at,
-                        updatedAt=playlist.updated_at
-                    ),
-                    cursor=encode_cursor(str(playlist.date))
-                ) for playlist in playlists
-            ]
-
-            return PlaylistConnection(
-                edges=edges,
-                pageInfo=PageInfo(
-                    hasNextPage=has_next_page,
-                    hasPreviousPage=after is not None,
-                    startCursor=edges[0].cursor if edges else None,
-                    endCursor=edges[-1].cursor if edges else None
-                ),
-                totalCount=total_count
-            )
+        return await Playlist.get_playlists(info, first, after, filter)
 
     @strawberry.field
     async def song(self, id: strawberry.ID) -> Optional[SongBasicType]:

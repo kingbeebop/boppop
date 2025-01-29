@@ -1,0 +1,41 @@
+import base64
+from datetime import date, datetime
+from typing import List, TypeVar, Optional
+from .types.playlist import PageInfo, PlaylistEdge
+
+T = TypeVar('T')
+
+def encode_cursor(value: str) -> str:
+    """Encode a cursor value to base64."""
+    return base64.b64encode(str(value).encode()).decode()
+
+def decode_cursor(cursor: str) -> str:
+    """Decode a base64 cursor back to its original value."""
+    return base64.b64decode(cursor.encode()).decode()
+
+def decode_date_cursor(cursor: str) -> date:
+    """Decode a cursor back to a date."""
+    date_str = decode_cursor(cursor)
+    return date.fromisoformat(date_str)
+
+def encode_datetime_cursor(dt: datetime) -> str:
+    """Encode a datetime as a cursor."""
+    return encode_cursor(dt.isoformat())
+
+def decode_datetime_cursor(cursor: str) -> datetime:
+    """Decode a cursor back to a datetime."""
+    dt_str = decode_cursor(cursor)
+    return datetime.fromisoformat(dt_str)
+
+def create_page_info(
+    edges: List[PlaylistEdge],
+    has_next_page: bool,
+    has_previous_page: bool
+) -> PageInfo:
+    """Create a PageInfo object from a list of edges."""
+    return PageInfo(
+        hasNextPage=has_next_page,
+        hasPreviousPage=has_previous_page,
+        startCursor=edges[0].cursor if edges else None,
+        endCursor=edges[-1].cursor if edges else None
+    ) 

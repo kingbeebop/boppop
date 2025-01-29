@@ -34,24 +34,27 @@ async def seed_database():
                 user=test_user
             )
             session.add(test_artist)
+
+            # Create test song
+            test_song = Song(
+                title="Test Song",
+                url="https://soundcloud.com/user-872282317/daylight-r0bbery",
+                artist=test_artist,
+            )
+            session.add(test_song)
             
             # Create test playlist
             test_playlist = Playlist(
                 number=1,
                 theme="Test Theme",
-                date=date(2024, 1, 1),
+                date=date(2024, 2, 1),
                 active=True,
-                contest=True
+                contest=False,
+                songs=[test_song]
             )
             session.add(test_playlist)
             
-            # Create test song
-            test_song = Song(
-                title="Test Song",
-                url="https://example.com/song.mp3",
-                artist=test_artist
-            )
-            session.add(test_song)
+            
             
             await session.commit()
             logger.info("Database seeded successfully")

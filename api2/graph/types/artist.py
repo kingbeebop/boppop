@@ -1,5 +1,6 @@
 from typing import Optional, List, Annotated
 from datetime import datetime
+from enum import Enum
 from strawberry.types import Info
 from strawberry import field
 from strawberry import type as strawberry_type
@@ -9,14 +10,12 @@ from sqlalchemy import select, or_, func
 from db.session import AsyncSessionLocal
 from models.artist import Artist as ArtistModel
 
-@strawberry.enum
-class SortDirection:
+class SortDirection(Enum):
     ASC = "asc"
     DESC = "desc"
 
 @strawberry.enum
-class ArtistSortField:
-    USERNAME = "username"
+class ArtistSortField(Enum):
     NAME = "name"
     CREATED_AT = "created_at"
 
@@ -28,17 +27,28 @@ class PageInfo:
     has_next: bool
     has_prev: bool
 
-@strawberry.type
+@strawberry_type
 class Artist:
-    """Represents a user/artist in the system."""
+    """Represents an artist profile."""
     id: ID
-    username: str
-    name: Optional[str]
-    email: str
+    name: str
     bio: Optional[str] = None
-    profile_pic: Optional[str] = None
-    created_at: datetime
-    updated_at: datetime
+    profile_pic: Optional[str] = strawberry.field(name="profilePic")
+    created_at: datetime = strawberry.field(name="createdAt")
+    updated_at: datetime = strawberry.field(name="updatedAt")
+    song_ids: List[ID] = strawberry.field(name="songIds")
+
+    @classmethod
+    def from_db(cls, artist: ArtistModel) -> "Artist":
+        return cls(
+            id=str(artist.id),
+            name=artist.name,
+            bio=artist.bio,
+            profile_pic=artist.profile_pic,
+            created_at=artist.created_at,
+            updated_at=artist.updated_at,
+            song_ids=[str(song.id) for song in artist.songs] if artist.songs else []
+        )
 
     # from .song import Song
     # @field
@@ -58,16 +68,15 @@ class Artist:
 
 @strawberry_type
 class ArtistInput:
-    username: str
-    email: str
-    password: str
+    """Input type for creating an artist."""
+    name: str
     bio: Optional[str] = None
     profile_pic: Optional[str] = None
 
 @strawberry_type
 class ArtistUpdateInput:
-    username: Optional[str] = None
-    email: Optional[str] = None
+    """Input type for updating an artist."""
+    name: Optional[str] = None
     bio: Optional[str] = None
     profile_pic: Optional[str] = None
 
@@ -93,21 +102,12 @@ class Query:
         sort_by: Optional[ArtistSortField] = None,
         sort_direction: Optional[SortDirection] = None
     ) -> ArtistConnection:
-        from sqlalchemy import select, or_
-        from models.artist import Artist as ArtistModel
-        from db.session import AsyncSessionLocal
-
         async with AsyncSessionLocal() as session:
             query = select(ArtistModel)
 
             # Apply search filter
             if search:
-                query = query.where(
-                    or_(
-                        ArtistModel.username.ilike(f"%{search}%"),
-                        ArtistModel.name.ilike(f"%{search}%")
-                    )
-                )
+                query = query.where(ArtistModel.name.ilike(f"%{search}%"))
 
             # Apply sorting
             if sort_by:
@@ -130,14 +130,7 @@ class Query:
 
             return ArtistConnection(
                 items=[
-                    Artist(
-                        id=str(artist.id),
-                        name=artist.name,
-                        bio=artist.bio,
-                        profile_pic=artist.profile_pic,
-                        created_at=artist.created_at,
-                        updated_at=artist.updated_at
-                    ) for artist in artists
+                    Artist.from_db(artist) for artist in artists
                 ],
                 page_info=PageInfo(
                     total_items=total_items,
@@ -163,11 +156,4 @@ class Query:
             if not artist:
                 return None
 
-            return Artist(
-                id=str(artist.id),
-                name=artist.name,
-                bio=artist.bio,
-                profile_pic=artist.profile_pic,
-                created_at=artist.created_at,
-                updated_at=artist.updated_at
-            )
+            return Artist.from_db(artist)
