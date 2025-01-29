@@ -4,10 +4,7 @@ import { RootState } from '../redux/store';
 import Playhead from './Playhead';
 
 const Footer: React.FC = () => {
-  const selectedSongId = useSelector((state: RootState) => state.songs.selectedSongId);
-  const selectedSong = useSelector((state: RootState) => 
-    selectedSongId ? state.songs.byId[selectedSongId] : null
-  );
+  const selectedSong = useSelector((state: RootState) => state.songs.selectedSong);
 
   if (!selectedSong) {
     return null;
@@ -15,7 +12,7 @@ const Footer: React.FC = () => {
 
   return (
     <div style={{ position: 'fixed', bottom: 0, width: '100%', height: '166px', backgroundColor: '#1a202c', zIndex: 50 }} className="flex justify-center items-center">
-      <Playhead song={selectedSong} autoplay={true} />
+      <Playhead song={selectedSong} />
     </div>
   );
 };

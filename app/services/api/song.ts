@@ -11,15 +11,18 @@ const SONG_FIELDS = `
 
 export async function getSongsByIds(ids: string[]): Promise<Song[]> {
   const query = `
-    query GetSongs($ids: [ID!]!) {
+    query GetSongsByIds($ids: [ID!]!) {
       songsByIds(ids: $ids) {
         ${SONG_FIELDS}
       }
     }
   `;
 
-  const response = await graphqlRequest<{ songsByIds: Song[] }>(query, { ids });
-  return response.songsByIds;
+  const response = await graphqlRequest<{ data: { songsByIds: Song[] } }>(query, { ids });
+  console.log("Raw response:", response);
+  
+  // The response includes a data property that contains songsByIds
+  return response.data.songsByIds;
 }
 
 export async function getSong(id: string): Promise<Song> {

@@ -55,7 +55,6 @@ const Login: React.FC<LoginProps> = ({ open, onClose }) => {
 
   const handleRegister = () => {
     onClose();
-    router.push('/register');
   };
 
   return (

@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import { 
   Home as HomeIcon,
+  Info as InfoIcon,
   Add as AddIcon,
   People as PeopleIcon,
   Archive as ArchiveIcon 
@@ -48,6 +49,23 @@ const Navbar = () => {
               sx={iconButtonStyle}
             >
               <HomeIcon />
+            </IconButton>
+          </Tooltip>
+          
+          <Tooltip 
+            title="About" 
+            enterDelay={200}
+            leaveDelay={0}
+            arrow
+            placement="bottom"
+          >
+            <IconButton
+              color="inherit"
+              onClick={() => router.push('/about')}
+              aria-label="about"
+              sx={iconButtonStyle}
+            >
+              <InfoIcon />
             </IconButton>
           </Tooltip>
           

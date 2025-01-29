@@ -12,12 +12,20 @@ interface SongCardProps {
 const SongCard: React.FC<SongCardProps> = ({ songId }) => {
   const dispatch = useDispatch();
   const song = useSelector((state: RootState) => state.songs.byId[songId]);
-  const selectedSongId = useSelector((state: RootState) => state.songs.selectedSongId);
+  const selectedSong = useSelector((state: RootState) => state.songs.selectedSong);
   const [isSelected, setIsSelected] = useState(false);
 
   useEffect(() => {
-    setIsSelected(selectedSongId === songId);
-  }, [selectedSongId, songId]);
+    console.log("CARD: ",songId);
+  }, []);
+
+  useEffect(() => {
+    console.log("Song: ",song);
+  }, [song]);
+
+  useEffect(() => {
+    setIsSelected(selectedSong?.id === songId);
+  }, [selectedSong, songId]);
 
   const handleClick = () => {
     dispatch(setSelectedSong(songId));

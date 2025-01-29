@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../redux/store';
 import { fetchPlaylist } from '../redux/slices/playlistSlice';
+import { fetchSongsByIds } from '../redux/slices/songSlice';
 import SongCard from './SongCard';
 import { 
   Box, 
@@ -27,6 +28,12 @@ const Playlist: React.FC<PlaylistProps> = ({ id }) => {
       dispatch(fetchPlaylist(id));
     }
   }, [dispatch, id, playlist]);
+
+  useEffect(() => {
+    if (playlist?.songIds.length) {
+      dispatch(fetchSongsByIds(playlist.songIds));
+    }
+  }, [dispatch, playlist?.songIds]);
 
   if (loading) {
     return (
@@ -65,6 +72,7 @@ const Playlist: React.FC<PlaylistProps> = ({ id }) => {
 
         <Stack spacing={2}>
           {playlist.songIds.map((songId) => (
+            console.log(songId),
             <SongCard key={songId} songId={songId} />
           ))}
         </Stack>

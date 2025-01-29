@@ -1,12 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { RootState } from '../store';
-import { getSong, getSongsByIds } from '../../services/api';
+import { getSongsByIds } from '../../services/api/song';
 import { Song } from '../../types';
 
 interface SongState {
   byId: Record<string, Song>;
   allIds: string[];
-  selectedSongId: string | null;
+  selectedSong: Song | null;
   loading: boolean;
   error: string | null;
 }
@@ -14,22 +14,17 @@ interface SongState {
 const initialState: SongState = {
   byId: {},
   allIds: [],
-  selectedSongId: null,
+  selectedSong: null,
   loading: false,
   error: null,
 };
 
-export const fetchSong = createAsyncThunk(
-  'songs/fetchSong',
-  async (id: string) => {
-    return await getSong(id);
-  }
-);
-
-export const fetchSongs = createAsyncThunk(
-  'songs/fetchSongs',
+export const fetchSongsByIds = createAsyncThunk(
+  'songs/fetchSongsByIds',
   async (ids: string[]) => {
-    return await getSongsByIds(ids);
+    const songs = await getSongsByIds(ids);
+    console.log("Fetched songs:", songs);
+    return songs;
   }
 );
 
@@ -38,26 +33,27 @@ const songSlice = createSlice({
   initialState,
   reducers: {
     setSelectedSong: (state, action) => {
-      state.selectedSongId = action.payload;
+      state.selectedSong = state.byId[action.payload];
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchSong.fulfilled, (state, action) => {
-        if (action.payload) {
-          state.byId[action.payload.id] = action.payload;
-          if (!state.allIds.includes(action.payload.id)) {
-            state.allIds.push(action.payload.id);
-          }
-        }
+      .addCase(fetchSongsByIds.pending, (state) => {
+        state.loading = true;
+        state.error = null;
       })
-      .addCase(fetchSongs.fulfilled, (state, action) => {
+      .addCase(fetchSongsByIds.fulfilled, (state, action) => {
+        state.loading = false;
         action.payload.forEach(song => {
           state.byId[song.id] = song;
           if (!state.allIds.includes(song.id)) {
             state.allIds.push(song.id);
           }
         });
+      })
+      .addCase(fetchSongsByIds.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Failed to fetch songs';
       });
   },
 });
