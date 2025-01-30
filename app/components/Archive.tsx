@@ -13,7 +13,7 @@ import {
   Button,
   CircularProgress
 } from '@mui/material';
-import PlaylistCard from './PlaylistCard';
+import PlaylistCard from './playlist/PlaylistCard';
 
 const Archive: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -59,7 +59,7 @@ const Archive: React.FC = () => {
         margin="normal"
       />
 
-      <Box display="grid" gridTemplateColumns="repeat(auto-fill, minmax(250px, 1fr))" gap={2}>
+      <Box sx={{ maxWidth: '800px', margin: '0 auto', padding: 2 }}>
         {playlists.map((playlist) => (
           <PlaylistCard key={playlist.id} playlist={playlist} />
         ))}

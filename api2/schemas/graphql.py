@@ -274,6 +274,26 @@ class Query:
                 ) for song in songs
             ]
 
+    @strawberry.field
+    async def current_challenge(self) -> Optional[PlaylistType]:
+        """Get the most recent playlist as the current challenge."""
+        async with AsyncSessionLocal() as session:
+            # Get the playlist with the highest number (most recent)
+            query = (
+                select(Playlist)
+                .options(selectinload(Playlist.songs))
+                .order_by(Playlist.number.desc())
+                .limit(1)
+            )
+            
+            result = await session.execute(query)
+            playlist = result.scalar_one_or_none()
+            
+            if not playlist:
+                return None
+                
+            return PlaylistType.from_db_model(playlist)
+
 # Conversion methods
 @classmethod
 def artist_basic_from_db(cls, db_artist: ArtistModel) -> "ArtistBasicType":

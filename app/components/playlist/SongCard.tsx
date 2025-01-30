@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../redux/store';
-import { setSelectedSong } from '../redux/slices/songSlice';
+import { RootState } from '../../redux/store';
+import { setSelectedSong } from '../../redux/slices/songSlice';
 import { ListItemButton, ListItemText, ListItemIcon } from '@mui/material';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 

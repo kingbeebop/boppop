@@ -67,6 +67,11 @@ const playlistSlice = createSlice({
         state.loading = false;
         const { edges, pageInfo, totalCount } = action.payload.playlists;
         
+        if (!action.meta.arg.after) {
+          state.byId = {};
+          state.allIds = [];
+        }
+        
         edges.forEach(({ node }) => {
           state.byId[node.id] = node;
           if (!state.allIds.includes(node.id)) {

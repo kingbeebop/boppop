@@ -15,7 +15,7 @@ import {
   Archive as ArchiveIcon 
 } from '@mui/icons-material';
 import { useRouter } from 'next/router';
-import { LoginAvatar } from './LoginAvatar';
+import LoginAvatar from './login/LoginAvatar';
 
 const Navbar = () => {
   const router = useRouter();

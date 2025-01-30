@@ -12,6 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.exc import IntegrityError
+import re
 
 from db.session import get_db
 from models.user import User
@@ -75,6 +77,33 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
     ) -> None:
         print(f"Verification requested for user {user.id}. Token: {token}")
 
+    async def _generate_unique_artist_name(self, session: AsyncSession, base_name: str) -> str:
+        """Generate a unique artist name by appending numbers if necessary."""
+        # First try the base name
+        query = select(Artist).where(Artist.name == base_name)
+        result = await session.execute(query)
+        if not result.scalar_one_or_none():
+            return base_name
+
+        # If base name exists, find all similar names with numbers
+        pattern = f"^{re.escape(base_name)}\\d*$"
+        query = select(Artist).where(Artist.name.regexp_match(pattern))
+        result = await session.execute(query)
+        existing_names = [artist.name for artist in result.scalars().all()]
+
+        if not existing_names:
+            return f"{base_name}1"
+
+        # Find the highest number used
+        max_num = 0
+        for name in existing_names:
+            suffix = name[len(base_name):]
+            if suffix.isdigit():
+                max_num = max(max_num, int(suffix))
+
+        # Return next number in sequence
+        return f"{base_name}{max_num + 1}"
+
     async def create(
         self,
         user_create: UserCreate,
@@ -106,19 +135,31 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
             # Create user
             user = User(**user_dict)
             db.add(user)
-            await db.flush()
+            await db.flush()  # Flush to get user.id
 
-            # Create associated artist
-            artist = Artist(
-                name=user_create.username,
-                user_id=user.id
-            )
-            db.add(artist)
+            # Check if user already has an artist
+            query = select(Artist).where(Artist.user_id == user.id)
+            result = await db.execute(query)
+            existing_artist = result.scalar_one_or_none()
+
+            if not existing_artist:
+                # Generate unique artist name
+                artist_name = await self._generate_unique_artist_name(db, user_create.username)
+
+                # Create associated artist
+                artist = Artist(
+                    name=artist_name,
+                    user_id=user.id
+                )
+                db.add(artist)
+                
+                logger.info(f"Created artist {artist_name} for user {user.id}")
+            else:
+                logger.info(f"User {user.id} already has artist {existing_artist.name}")
             
             await db.commit()
             await db.refresh(user)
             
-            logger.info(f"Created user {user.id}")
             return user
             
         except Exception as e:

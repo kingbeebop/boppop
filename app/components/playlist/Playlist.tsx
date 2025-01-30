@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '../redux/store';
-import { fetchPlaylist } from '../redux/slices/playlistSlice';
-import { fetchSongsByIds } from '../redux/slices/songSlice';
-import SongCard from './SongCard';
+import { AppDispatch, RootState } from '../../redux/store';
+import { fetchPlaylist } from '../../redux/slices/playlistSlice';
+import { fetchSongsByIds } from '../../redux/slices/songSlice';
+import SongCard from '../playlist/SongCard';
 import { 
   Box, 
   Typography, 
@@ -11,7 +11,7 @@ import {
   Stack,
   Container
 } from '@mui/material';
-import { formatDate } from '../utils/date';
+import { formatDate } from '../../utils/date';
 
 interface PlaylistProps {
   id: string;

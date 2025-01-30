@@ -1,6 +1,6 @@
 // pages/playlist/[id].tsx
 import { useRouter } from 'next/router';
-import Playlist from '../../components/Playlist';
+import Playlist from '../../components/playlist/Playlist';
 
 const PlaylistPage: React.FC = () => {
   const router = useRouter();

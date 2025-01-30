@@ -13,7 +13,7 @@ class Artist(Base, TimestampMixin):
     __tablename__ = "artists"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String(100), nullable=False)
+    name = Column(String(100), nullable=False, unique=True)
     bio = Column(String, nullable=True)
     profile_pic = Column(String, nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)

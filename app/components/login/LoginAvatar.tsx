@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useRouter } from 'next/router';
-import { AppDispatch, RootState } from '../redux/store';
-import { logout } from '../redux/slices/authSlice';
+import { AppDispatch, RootState } from '../../redux/store';
+import { logout } from '../../redux/slices/authSlice';
 import {
   Avatar,
   IconButton,
@@ -17,8 +17,8 @@ import {
   Logout as LogoutIcon,
   Login as LoginIcon,
 } from '@mui/icons-material';
-import Login from './Login';
-import Register from './Register';
+import Login from '../login/Login';
+import Register from '../login/Register';
 
 function stringToColor(string: string) {
   let hash = 0;

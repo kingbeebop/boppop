@@ -2,8 +2,8 @@
 
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch } from '../redux/store';
-import { fetchArtists, selectArtists, selectArtistsState, setSearch } from '../redux/slices/artistSlice';
+import { AppDispatch } from '../../redux/store';
+import { fetchArtists, selectArtists, selectArtistsState, setSearch } from '../../redux/slices/artistSlice';
 import { Box, Button, CircularProgress, TextField, Typography } from '@mui/material';
 import ArtistCard from './ArtistCard';
 
@@ -63,7 +63,7 @@ const ArtistList: React.FC = () => {
         </Box>
       ) : (
         <>
-          <Box display="grid" gridTemplateColumns="repeat(auto-fill, minmax(250px, 1fr))" gap={2}>
+          <Box sx={{ maxWidth: '800px', margin: '0 auto', padding: 2 }}>
             {artists.map((artist) => (
               <ArtistCard key={artist.id} artist={artist} />
             ))}
