@@ -18,6 +18,7 @@ import {
   Login as LoginIcon,
 } from '@mui/icons-material';
 import Login from './Login';
+import Register from './Register';
 
 function stringToColor(string: string) {
   let hash = 0;
@@ -41,6 +42,7 @@ export const LoginAvatar: React.FC = () => {
   );
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [registerOpen, setRegisterOpen] = useState(false);
 
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -64,6 +66,16 @@ export const LoginAvatar: React.FC = () => {
     handleCloseMenu();
   };
 
+  const handleRegisterClick = () => {
+    setLoginOpen(false);
+    setRegisterOpen(true);
+  };
+
+  const handleLoginClick = () => {
+    setRegisterOpen(false);
+    setLoginOpen(true);
+  };
+
   if (!user) {
     return (
       <>
@@ -72,7 +84,16 @@ export const LoginAvatar: React.FC = () => {
             <LoginIcon />
           </IconButton>
         </Tooltip>
-        <Login open={loginOpen} onClose={() => setLoginOpen(false)} />
+        <Login 
+          open={loginOpen} 
+          onClose={() => setLoginOpen(false)}
+          onRegisterClick={handleRegisterClick}
+        />
+        <Register
+          open={registerOpen}
+          onClose={() => setRegisterOpen(false)}
+          onLoginClick={handleLoginClick}
+        />
       </>
     );
   }

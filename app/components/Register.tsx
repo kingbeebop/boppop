@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '../redux/store';
-import { login } from '../redux/slices/authSlice';
+import { register } from '../redux/slices/authSlice';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import {
@@ -19,39 +19,63 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 
-interface LoginProps {
+interface RegisterProps {
   open: boolean;
   onClose: () => void;
-  onRegisterClick: () => void;
+  onLoginClick: () => void;
 }
 
 const validationSchema = Yup.object({
   username: Yup.string()
     .required('Username is required')
-    .min(3, 'Username must be at least 3 characters'),
+    .min(3, 'Username must be at least 3 characters')
+    .max(30, 'Username must be less than 30 characters')
+    .matches(/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, underscores and dashes'),
+  email: Yup.string()
+    .required('Email is required')
+    .email('Invalid email address'),
   password: Yup.string()
     .required('Password is required')
-    .min(6, 'Password must be at least 6 characters')
+    .min(8, 'Password must be at least 8 characters')
+    .matches(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+      'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+    ),
+  confirmPassword: Yup.string()
+    .required('Please confirm your password')
+    .oneOf([Yup.ref('password')], 'Passwords must match')
 });
 
-const Login: React.FC<LoginProps> = ({ open, onClose, onRegisterClick }) => {
+const Register: React.FC<RegisterProps> = ({ open, onClose, onLoginClick }) => {
   const dispatch = useDispatch<AppDispatch>();
 
   const formik = useFormik({
     initialValues: {
       username: '',
-      password: ''
+      email: '',
+      password: '',
+      confirmPassword: ''
     },
     validationSchema,
     onSubmit: async (values, { setSubmitting, setStatus }) => {
       try {
-        const result = await dispatch(login(values)).unwrap();
-        if (result.token) {
-          onClose();
-        }
+        await dispatch(register({
+          username: values.username,
+          email: values.email,
+          password: values.password
+        })).unwrap();
+        onClose();
       } catch (error) {
-        console.error('Login error:', error);
-        setStatus(typeof error === 'string' ? error : 'Login failed. Please check your credentials.');
+        console.error('Registration error:', error);
+        setStatus(
+          error instanceof Error 
+            ? error.message 
+            : 'Registration failed. Please try again later.'
+        );
+        // If it's a server error, show a more specific message
+        if (error instanceof Error && error.message.includes('500')) {
+          setStatus('Server error. Please try again later.');
+        }
       } finally {
         setSubmitting(false);
       }
@@ -83,7 +107,7 @@ const Login: React.FC<LoginProps> = ({ open, onClose, onRegisterClick }) => {
           alignItems: 'center',
           pb: 1
         }}>
-          <Typography variant="h6">Sign In</Typography>
+          <Typography variant="h6">Create Account</Typography>
           <IconButton
             aria-label="close"
             onClick={handleClose}
@@ -117,6 +141,21 @@ const Login: React.FC<LoginProps> = ({ open, onClose, onRegisterClick }) => {
 
             <TextField
               fullWidth
+              id="email"
+              name="email"
+              label="Email"
+              type="email"
+              value={formik.values.email}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.email && Boolean(formik.errors.email)}
+              helperText={formik.touched.email && formik.errors.email}
+              disabled={formik.isSubmitting}
+              autoComplete="email"
+            />
+
+            <TextField
+              fullWidth
               id="password"
               name="password"
               label="Password"
@@ -127,7 +166,22 @@ const Login: React.FC<LoginProps> = ({ open, onClose, onRegisterClick }) => {
               error={formik.touched.password && Boolean(formik.errors.password)}
               helperText={formik.touched.password && formik.errors.password}
               disabled={formik.isSubmitting}
-              autoComplete="current-password"
+              autoComplete="new-password"
+            />
+
+            <TextField
+              fullWidth
+              id="confirmPassword"
+              name="confirmPassword"
+              label="Confirm Password"
+              type="password"
+              value={formik.values.confirmPassword}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.confirmPassword && Boolean(formik.errors.confirmPassword)}
+              helperText={formik.touched.confirmPassword && formik.errors.confirmPassword}
+              disabled={formik.isSubmitting}
+              autoComplete="new-password"
             />
           </Stack>
         </DialogContent>
@@ -136,11 +190,11 @@ const Login: React.FC<LoginProps> = ({ open, onClose, onRegisterClick }) => {
           <Button
             onClick={() => {
               handleClose();
-              onRegisterClick();
+              onLoginClick();
             }}
             disabled={formik.isSubmitting}
           >
-            Create Account
+            Back to Sign In
           </Button>
           <Button 
             type="submit"
@@ -151,7 +205,7 @@ const Login: React.FC<LoginProps> = ({ open, onClose, onRegisterClick }) => {
             {formik.isSubmitting ? (
               <CircularProgress size={24} color="inherit" />
             ) : (
-              'Sign In'
+              'Register'
             )}
           </Button>
         </DialogActions>
@@ -160,4 +214,4 @@ const Login: React.FC<LoginProps> = ({ open, onClose, onRegisterClick }) => {
   );
 };
 
-export default Login;
+export default Register; 

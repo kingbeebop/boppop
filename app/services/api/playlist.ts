@@ -71,7 +71,7 @@ export async function getPlaylists({
   return response.data;
 }
 
-export async function getPlaylist(id: number): Promise<Playlist> {
+export async function getPlaylist(id: string): Promise<Playlist> {
   const query = `
     query GetPlaylist($id: ID!) {
       playlist(id: $id) {

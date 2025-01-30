@@ -11,6 +11,7 @@ from fastapi_users.db import SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
+from fastapi.security import OAuth2PasswordRequestForm
 
 from db.session import get_db
 from models.user import User
@@ -27,23 +28,42 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
     reset_password_token_secret = settings.JWT_SECRET
     verification_token_secret = settings.JWT_SECRET
 
+    async def authenticate(self, credentials: OAuth2PasswordRequestForm) -> Optional[User]:
+        """Override the authenticate method to use username instead of email"""
+        try:
+            # Query by username instead of email
+            async with self.user_db.session as session:
+                query = select(User).where(User.username == credentials.username)
+                result = await session.execute(query)
+                user = result.scalar_one_or_none()
+
+            if not user:
+                # Run password hash to prevent timing attacks
+                self.password_helper.hash(credentials.password)
+                return None
+
+            verified, updated_password_hash = self.password_helper.verify_and_update(
+                credentials.password, user.hashed_password
+            )
+
+            if not verified:
+                return None
+
+            # Update password hash if needed
+            if updated_password_hash is not None:
+                await self.user_db.update(user, {"hashed_password": updated_password_hash})
+
+            return user
+
+        except Exception as e:
+            logger.error(f"Authentication error: {str(e)}")
+            return None
+
     async def on_after_register(
         self, user: User, request: Optional[Request] = None
     ) -> None:
         print(f"User {user.id} has registered.")
-        try:
-            async with AsyncSession() as session:
-                # Create associated artist
-                artist = Artist(
-                    name=user.username,
-                    user_id=user.id
-                )
-                session.add(artist)
-                await session.commit()
-                logger.info(f"Created artist for user {user.id}")
-        except Exception as e:
-            logger.error(f"Error creating artist for user {user.id}: {str(e)}")
-            raise
+        logger.info(f"User {user.id} registration completed")
 
     async def on_after_forgot_password(
         self, user: User, token: str, request: Optional[Request] = None

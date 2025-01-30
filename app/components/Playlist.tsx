@@ -14,7 +14,7 @@ import {
 import { formatDate } from '../utils/date';
 
 interface PlaylistProps {
-  id: number;
+  id: string;
 }
 
 const Playlist: React.FC<PlaylistProps> = ({ id }) => {

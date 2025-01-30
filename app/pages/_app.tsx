@@ -11,18 +11,21 @@ import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
+import { AuthProvider } from '../components/AuthProvider';
 
 const MyApp: React.FC<AppProps> = ({ Component, pageProps }) => {
   return (
     <Provider store={store}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <ErrorBoundary fallback={<p>We&apos;re currently experiencing a problem with our servers.</p>}>
-          <Layout>
-            <Component {...pageProps} />
-          </Layout>
-        </ErrorBoundary>
-      </ThemeProvider>
+      <AuthProvider>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <ErrorBoundary fallback={<p>We&apos;re currently experiencing a problem with our servers.</p>}>
+            <Layout>
+              <Component {...pageProps} />
+            </Layout>
+          </ErrorBoundary>
+        </ThemeProvider>
+      </AuthProvider>
     </Provider>
   );
 };

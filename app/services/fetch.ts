@@ -1,33 +1,42 @@
-import config from '../config';
-
-interface FetchOptions extends RequestInit {
-  protected?: boolean;
-}
-
-async function baseFetch<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
-  const { protected: isProtected, ...fetchOptions } = options;
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string>),
-  };
-
-  if (isProtected) {
-    const token = localStorage.getItem('token');
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
+export async function baseFetch<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+  
+  const headers = new Headers(options.headers || {});
+  headers.set('Accept', 'application/json');
+  
+  // Add auth token if it exists and Authorization isn't already set
+  const token = localStorage.getItem('token');
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  
+  // Don't override Content-Type if it's already set
+  if (!headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
   }
 
-  const response = await fetch(`${config.apiUrl}${endpoint}`, {
-    ...fetchOptions,
+  const response = await fetch(`${baseUrl}${endpoint}`, {
+    ...options,
     headers,
+    credentials: 'include',
   });
 
   if (!response.ok) {
-    throw new Error(`API Error: ${response.statusText}`);
+    const errorText = await response.text();
+    let errorDetail;
+    try {
+      const errorJson = JSON.parse(errorText);
+      errorDetail = errorJson.detail || 'An error occurred';
+    } catch {
+      errorDetail = errorText || 'An error occurred';
+    }
+    throw new Error(errorDetail);
   }
 
-  return response.json();
+  return response.status === 204 ? ({} as T) : response.json();
 }
 
 export async function graphqlRequest<T>(
@@ -38,8 +47,6 @@ export async function graphqlRequest<T>(
   return baseFetch<T>('/graphql', {
     method: 'POST',
     body: JSON.stringify({ query, variables }),
-    protected: isProtected,
   });
 }
 
-export { baseFetch };

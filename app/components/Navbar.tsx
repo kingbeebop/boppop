@@ -53,23 +53,6 @@ const Navbar = () => {
           </Tooltip>
           
           <Tooltip 
-            title="About" 
-            enterDelay={200}
-            leaveDelay={0}
-            arrow
-            placement="bottom"
-          >
-            <IconButton
-              color="inherit"
-              onClick={() => router.push('/about')}
-              aria-label="about"
-              sx={iconButtonStyle}
-            >
-              <InfoIcon />
-            </IconButton>
-          </Tooltip>
-          
-          <Tooltip 
             title="Submit Song" 
             enterDelay={200}
             leaveDelay={0}
@@ -117,6 +100,23 @@ const Navbar = () => {
               sx={iconButtonStyle}
             >
               <ArchiveIcon />
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip 
+            title="About" 
+            enterDelay={200}
+            leaveDelay={0}
+            arrow
+            placement="bottom"
+          >
+            <IconButton
+              color="inherit"
+              onClick={() => router.push('/about')}
+              aria-label="about"
+              sx={iconButtonStyle}
+            >
+              <InfoIcon />
             </IconButton>
           </Tooltip>
         </Box>

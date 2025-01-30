@@ -2,29 +2,55 @@ import { baseFetch } from '../fetch';
 import { Login, AuthResponse, Registration, User } from '../../types';
 
 export async function loginUser(data: Login): Promise<AuthResponse> {
-  return baseFetch<AuthResponse>('/auth/jwt/login', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      username: data.username,
-      password: data.password,
-    }),
-  });
+  const formData = new URLSearchParams();
+  formData.append('username', data.username);
+  formData.append('password', data.password);
+
+  try {
+    const response = await baseFetch<AuthResponse>('/auth/jwt/login', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData.toString(),
+      credentials: 'include',
+    });
+    
+    if (response.access_token) {
+      localStorage.setItem('token', response.access_token);
+      if (response.refresh_token) {
+        localStorage.setItem('refresh_token', response.refresh_token);
+      }
+    }
+    
+    return response;
+  } catch (error) {
+    console.error('Raw login error:', error);
+    throw error;
+  }
 }
 
 export async function registerUser(data: Registration): Promise<void> {
-  return baseFetch<void>('/auth/register', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
+  try {
+    await baseFetch<void>('/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('REGISTER_USER_ALREADY_EXISTS')) {
+      throw new Error('Username or email already exists');
+    }
+    throw error;
+  }
 }
 
 export async function logoutUser(): Promise<void> {
   return baseFetch<void>('/auth/jwt/logout', {
     method: 'POST',
-    protected: true,
   });
 }
 
@@ -32,7 +58,6 @@ export async function validateToken(): Promise<boolean> {
   try {
     await baseFetch<void>('/auth/jwt/verify', {
       method: 'GET',
-      protected: true,
     });
     return true;
   } catch {
@@ -40,10 +65,9 @@ export async function validateToken(): Promise<boolean> {
   }
 }
 
-export async function getUser(): Promise<User> {
+export async function getCurrentUser(): Promise<User> {
   return baseFetch<User>('/users/me', {
     method: 'GET',
-    protected: true,
   });
 }
 
@@ -65,25 +89,57 @@ export async function resetPassword(email: string): Promise<void> {
   });
 }
 
-export async function attemptTokenLogin(): Promise<User | null> {
-  try {
-    const tokenValue = localStorage.getItem('token');
-    if (!tokenValue) return null;
+export async function refreshAccessToken(): Promise<AuthResponse> {
+  const refresh_token = localStorage.getItem('refresh_token');
+  if (!refresh_token) {
+    throw new Error('No refresh token available');
+  }
 
-    const response = await baseFetch<User>('/auth/me', {
-      protected: true
+  try {
+    const response = await baseFetch<AuthResponse>('/auth/jwt/refresh', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token: refresh_token }),
     });
+
+    if (response.access_token) {
+      localStorage.setItem('token', response.access_token);
+      if (response.refresh_token) {
+        localStorage.setItem('refresh_token', response.refresh_token);
+      }
+    }
+
     return response;
   } catch (error) {
-    // Handle token refresh or return null
-    const refreshTokenValue = getRefreshToken();
-    if (refreshTokenValue) {
-      const response = await refreshToken(refreshTokenValue);
-      if (response.access_token) {
-        localStorage.setItem('token', response.access_token);
-        localStorage.setItem('refresh_token', response.refresh_token);
-        return await getUser();
+    // If refresh fails, clear tokens
+    localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
+    throw error;
+  }
+}
+
+export async function initializeAuth(): Promise<User | null> {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    return null;
+  }
+
+  try {
+    // Try to get user data with current token
+    return await getCurrentUser();
+  } catch (error) {
+    // If current token fails, try refresh
+    try {
+      const refreshResponse = await refreshAccessToken();
+      if (refreshResponse.access_token) {
+        return await getCurrentUser();
       }
+    } catch (refreshError) {
+      // If refresh fails, clear tokens
+      localStorage.removeItem('token');
+      localStorage.removeItem('refresh_token');
     }
     return null;
   }

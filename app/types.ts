@@ -16,14 +16,12 @@ export interface Artist {
 }
 
 export interface User {
-  id: string;
-  username: string;
+  id: number;
   email: string;
-  artistId: string | null;
+  username: string;
   is_active: boolean;
-  is_verified: boolean;
-  created_at: string;
-  updated_at: string;
+  is_superuser: boolean;
+  artistId?: number;
 }
 
 export interface PageInfo {
@@ -87,16 +85,16 @@ export interface Login {
   password: string;
 }
 
+export interface Registration {
+  email: string;
+  password: string;
+  username: string;
+}
+
 export interface AuthResponse {
   access_token: string;
   refresh_token: string;
   token_type: string;
-}
-
-export interface Registration {
-  email: string;
-  username: string;
-  password: string;
 }
 
 export interface Submission {

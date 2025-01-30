@@ -38,7 +38,7 @@ export const fetchPlaylists = createAsyncThunk(
 
 export const fetchPlaylist = createAsyncThunk(
   'playlists/fetchPlaylist',
-  async (id: number) => {
+  async (id: string) => {
     return await getPlaylist(id);
   }
 );
