@@ -8,6 +8,8 @@ export interface AuthState {
   user: any | null;
   loading: boolean;
   error: string | null;
+  isAuthenticated: boolean;
+  showLoginModal: boolean;
 }
 
 const initialState: AuthState = {
@@ -15,6 +17,8 @@ const initialState: AuthState = {
   user: null,
   loading: false,
   error: null,
+  isAuthenticated: false,
+  showLoginModal: false,
 };
 
 export const login = createAsyncThunk(
@@ -116,6 +120,12 @@ const authSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    openLoginModal: (state) => {
+      state.showLoginModal = true;
+    },
+    closeLoginModal: (state) => {
+      state.showLoginModal = false;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -176,5 +186,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError } = authSlice.actions;
+export const { clearError, openLoginModal, closeLoginModal } = authSlice.actions;
 export default authSlice.reducer;

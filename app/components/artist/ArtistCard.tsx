@@ -28,18 +28,6 @@ const StyledCardContent = styled(CardContent)({
   },
 });
 
-const NumberBubble = styled(Box)(({ theme }) => ({
-  backgroundColor: theme.palette.primary.main,
-  color: theme.palette.primary.contrastText,
-  borderRadius: '50%',
-  width: '40px',
-  height: '40px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  marginRight: theme.spacing(2),
-}));
-
 interface ArtistCardProps {
   artist: Artist;
 }
@@ -48,7 +36,7 @@ const ArtistCard: React.FC<ArtistCardProps> = ({ artist }) => {
   const router = useRouter();
 
   const handleClick = () => {
-    router.push(`/artist/${artist.id}`);
+    router.push(`/artists/${artist.id}`);
   };
 
   return (

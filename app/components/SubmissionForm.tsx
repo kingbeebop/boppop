@@ -1,7 +1,8 @@
 import React from 'react';
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '../redux/store';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '../redux/store';
 import { submitSubmission } from '../redux/slices/submissionSlice';
+import { openLoginModal } from '../redux/slices/authSlice';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import {
@@ -34,6 +35,7 @@ const validationSchema = Yup.object({
 const SubmissionForm: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [submissionSuccess, setSubmissionSuccess] = React.useState(false);
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
 
   const formik = useFormik({
     initialValues: {
@@ -42,6 +44,12 @@ const SubmissionForm: React.FC = () => {
     },
     validationSchema,
     onSubmit: async (values, { setSubmitting, resetForm }) => {
+      if (!isAuthenticated) {
+        dispatch(openLoginModal());
+        setSubmitting(false);
+        return;
+      }
+
       try {
         await dispatch(submitSubmission(values)).unwrap();
         setSubmissionSuccess(true);
