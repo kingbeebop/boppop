@@ -13,6 +13,7 @@ from .inputs import (
     ArtistUpdateInput,
     SongInput,
     SongUpdateInput,
+    SongSubmissionInput,
     PlaylistInput,
     PlaylistUpdateInput,
     ReviewInput,
@@ -22,7 +23,7 @@ from .inputs import (
 )
 
 from .schema import schema
-from .context import Context, get_context
+from .context import GraphQLContext, get_graphql_context
 
 __all__ = [
     # Types
@@ -39,6 +40,7 @@ __all__ = [
     "ArtistUpdateInput",
     "SongInput",
     "SongUpdateInput",
+    "SongSubmissionInput",
     "PlaylistInput",
     "PlaylistUpdateInput",
     "ReviewInput",
@@ -50,6 +52,6 @@ __all__ = [
     "schema",
     
     # Context
-    "Context",
-    "get_context"
+    "GraphQLContext",
+    "get_graphql_context"
 ]

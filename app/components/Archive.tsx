@@ -34,14 +34,14 @@ const Archive: React.FC = () => {
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSearch = event.target.value;
     dispatch(setSearch(newSearch));
-    dispatch(fetchPlaylists({ first: 10, search: newSearch }));
+    dispatch(fetchPlaylists({ first: 10, filter: { search: newSearch } }));
   };
 
   const handleLoadMore = () => {
     dispatch(fetchPlaylists({ 
       first: 10, 
       after: endCursor ?? undefined,
-      search
+      filter: { search }
     }));
   };
 

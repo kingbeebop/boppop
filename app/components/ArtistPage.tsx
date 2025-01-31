@@ -13,7 +13,7 @@ const ArtistPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   
   // Get id from router and convert to number
-  const artistId = typeof router.query.id === 'string' ? parseInt(router.query.id, 10) : null;
+  const artistId = typeof router.query.id === 'string' ? router.query.id : null;
   
   // Select artist from store using artistId
   const artist = useSelector((state: RootState) => 

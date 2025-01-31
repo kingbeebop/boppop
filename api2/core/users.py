@@ -1,6 +1,6 @@
 import logging
 from typing import Optional, Union
-from fastapi import Depends, Request
+from fastapi import Depends, Request, HTTPException, Security, APIRouter
 from fastapi_users import BaseUserManager, FastAPIUsers, IntegerIDMixin
 from fastapi_users.authentication import (
     AuthenticationBackend,
@@ -11,61 +11,68 @@ from fastapi_users.db import SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm, HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.exc import IntegrityError
 import re
+from datetime import timedelta
 
-from db.session import get_db
+from db.session import get_session
 from models.user import User
 from models.artist import Artist
 from schemas.auth import UserCreate, UserUpdate
 from core.config import settings
+from core.security import create_access_token
 from fastapi_users.exceptions import InvalidPasswordException, UserAlreadyExists
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+router = APIRouter()  # Add this at the top
+
+async def get_user_db(session: AsyncSession = Depends(get_session)):
+    """Get a SQLAlchemy user database instance."""
+    yield SQLAlchemyUserDatabase(session, User)
+
 class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
     reset_password_token_secret = settings.JWT_SECRET
     verification_token_secret = settings.JWT_SECRET
 
+    async def get_by_username(self, username: str) -> Optional[User]:
+        """Get a user by username."""
+        query = select(User).where(User.username == username)
+        result = await self.user_db.session.execute(query)
+        return result.scalar_one_or_none()
+
     async def authenticate(self, credentials: OAuth2PasswordRequestForm) -> Optional[User]:
-        """Override the authenticate method to use username instead of email"""
+        """Authenticate a user with username/password."""
         try:
-            # Query by username instead of email
-            async with self.user_db.session as session:
-                query = select(User).where(User.username == credentials.username)
-                result = await session.execute(query)
-                user = result.scalar_one_or_none()
-
+            # First try email
+            user = await self.user_db.get_by_email(credentials.username)
             if not user:
-                # Run password hash to prevent timing attacks
-                self.password_helper.hash(credentials.password)
-                return None
+                # Then try username
+                user = await self.get_by_username(credentials.username)
+                if not user:
+                    # Hash password anyway to prevent timing attacks
+                    self.password_helper.hash(credentials.password)
+                    return None
 
-            verified, updated_password_hash = self.password_helper.verify_and_update(
+            verified, updated_hash = self.password_helper.verify_and_update(
                 credentials.password, user.hashed_password
             )
-
             if not verified:
                 return None
 
-            # Update password hash if needed
-            if updated_password_hash is not None:
-                await self.user_db.update(user, {"hashed_password": updated_password_hash})
+            if updated_hash:
+                await self.user_db.update(user, {"hashed_password": updated_hash})
 
             return user
-
         except Exception as e:
-            logger.error(f"Authentication error: {str(e)}")
+            logger.error(f"Authentication error: {e}")
             return None
 
-    async def on_after_register(
-        self, user: User, request: Optional[Request] = None
-    ) -> None:
-        print(f"User {user.id} has registered.")
-        logger.info(f"User {user.id} registration completed")
+    async def on_after_register(self, user: User, request: Optional[Request] = None):
+        print(f"User {user.id} registered successfully")
 
     async def on_after_forgot_password(
         self, user: User, token: str, request: Optional[Request] = None
@@ -75,7 +82,7 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
     async def on_after_request_verify(
         self, user: User, token: str, request: Optional[Request] = None
     ) -> None:
-        print(f"Verification requested for user {user.id}. Token: {token}")
+        print(f"Verification requested for user {user.id}. Verification token: {token}")
 
     async def _generate_unique_artist_name(self, session: AsyncSession, base_name: str) -> str:
         """Generate a unique artist name by appending numbers if necessary."""
@@ -111,61 +118,34 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
         request: Optional[Request] = None,
     ) -> User:
         """Create a user and associated artist profile."""
-        
         await self.validate_password(user_create.password, user_create)
 
         existing_user = await self.user_db.get_by_email(user_create.email)
-        if existing_user is not None:
+        if existing_user:
             raise UserAlreadyExists()
 
-        # Create user dict
-        user_dict = (
-            user_create.create_update_dict()
-            if safe
-            else user_create.create_update_dict_superuser()
-        )
+        user_dict = user_create.create_update_dict_superuser()
         user_dict["username"] = user_create.username
-        password = user_dict.pop("password")
-        user_dict["hashed_password"] = self.password_helper.hash(password)
+        user_dict["hashed_password"] = self.password_helper.hash(user_dict.pop("password"))
 
-        # Get database session
-        db = self.user_db.session
+        async with self.user_db.session as session:
+            try:
+                user = User(**user_dict)
+                session.add(user)
+                await session.flush()
 
-        try:
-            # Create user
-            user = User(**user_dict)
-            db.add(user)
-            await db.flush()  # Flush to get user.id
-
-            # Check if user already has an artist
-            query = select(Artist).where(Artist.user_id == user.id)
-            result = await db.execute(query)
-            existing_artist = result.scalar_one_or_none()
-
-            if not existing_artist:
-                # Generate unique artist name
-                artist_name = await self._generate_unique_artist_name(db, user_create.username)
-
-                # Create associated artist
                 artist = Artist(
-                    name=artist_name,
+                    name=user_create.username,
                     user_id=user.id
                 )
-                db.add(artist)
+                session.add(artist)
                 
-                logger.info(f"Created artist {artist_name} for user {user.id}")
-            else:
-                logger.info(f"User {user.id} already has artist {existing_artist.name}")
-            
-            await db.commit()
-            await db.refresh(user)
-            
-            return user
-            
-        except Exception as e:
-            await db.rollback()
-            logger.error(f"Error creating user: {str(e)}")
-            raise
+                await session.commit()
+                await session.refresh(user)
+                return user
+            except Exception as e:
+                await session.rollback()
+                raise
 
     async def validate_password(
         self,
@@ -243,24 +223,40 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
             result = await session.execute(stmt)
             return result.scalar_one_or_none()
 
-async def get_user_db(session: AsyncSession = Depends(get_db)):
-    yield SQLAlchemyUserDatabase(session, User)
-
-async def get_user_manager(user_db: SQLAlchemyUserDatabase = Depends(get_user_db)):
+async def get_user_manager(user_db=Depends(get_user_db)):
     yield UserManager(user_db)
 
-bearer_transport = BearerTransport(tokenUrl="api/auth/jwt/login")
+class AccessTokenStrategy(JWTStrategy):
+    """Strategy for short-lived access tokens."""
+    def __init__(self):
+        super().__init__(
+            secret=settings.JWT_SECRET,
+            lifetime_seconds=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            token_audience=["fastapi-users:auth"],
+            algorithm="HS256",
+        )
 
-def get_jwt_strategy() -> JWTStrategy:
-    return JWTStrategy(
-        secret=settings.JWT_SECRET,
-        lifetime_seconds=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
-    )
+class RefreshTokenStrategy(JWTStrategy):
+    """Strategy for long-lived refresh tokens."""
+    def __init__(self):
+        super().__init__(
+            secret=settings.JWT_SECRET,
+            lifetime_seconds=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+            token_audience=["fastapi-users:refresh"],
+            algorithm="HS256",
+        )
 
+# Update the auth backends
 auth_backend = AuthenticationBackend(
     name="jwt",
-    transport=bearer_transport,
-    get_strategy=get_jwt_strategy,
+    transport=BearerTransport(tokenUrl="auth/jwt/login"),
+    get_strategy=AccessTokenStrategy,
+)
+
+refresh_backend = AuthenticationBackend(
+    name="jwt-refresh",
+    transport=BearerTransport(tokenUrl="auth/jwt/refresh"),
+    get_strategy=RefreshTokenStrategy,
 )
 
 fastapi_users = FastAPIUsers[User, int](
@@ -269,3 +265,112 @@ fastapi_users = FastAPIUsers[User, int](
 )
 
 current_active_user = fastapi_users.current_user(active=True)
+
+async def get_user_with_artist(
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(current_active_user)
+) -> Optional[User]:
+    """Get current user with artist relationship eagerly loaded."""
+    if not user:
+        return None
+        
+    stmt = (
+        select(User)
+        .options(selectinload(User.artist))
+        .where(User.id == user.id)
+    )
+    result = await session.execute(stmt)
+    return result.scalar_one()
+
+# Add this new security scheme
+security = HTTPBearer(auto_error=False)
+
+async def get_optional_user(
+    session: AsyncSession = Depends(get_session),
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(security)
+) -> Optional[User]:
+    """Get current user without requiring authentication."""
+    if not credentials:
+        return None
+        
+    try:
+        token = credentials.credentials
+        strategy = AccessTokenStrategy()  # Use the access token strategy
+        user_id = await strategy.read_token(token)
+        if not user_id:
+            return None
+            
+        user = await session.get(User, int(user_id))
+        if not user or not user.is_active:
+            return None
+            
+        return user
+    except Exception:
+        return None
+
+async def optional_user_with_artist(
+    session: AsyncSession = Depends(get_session),
+    user: Optional[User] = Depends(get_optional_user)
+) -> Optional[User]:
+    """Get current user with artist relationship eagerly loaded, but don't require auth."""
+    if not user:
+        return None
+        
+    stmt = (
+        select(User)
+        .options(selectinload(User.artist))
+        .where(User.id == user.id)
+    )
+    result = await session.execute(stmt)
+    return result.scalar_one_or_none()
+
+# Make sure these settings are in core/config.py
+JWT_SECRET = settings.JWT_SECRET
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRE_MINUTES = settings.JWT_EXPIRE_MINUTES
+
+@router.post("/auth/jwt/refresh")
+async def refresh_token(
+    refresh_token: str = Depends(refresh_backend.get_strategy),
+    user_manager: UserManager = Depends(get_user_manager),
+):
+    """Refresh access token using refresh token."""
+    try:
+        user = await refresh_backend.get_strategy().read_token(refresh_token)
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+            
+        # Generate new access token
+        access_token = await auth_backend.get_strategy().write_token(user)
+        
+        return {
+            "access_token": access_token,
+            "token_type": "bearer"
+        }
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+@router.post("/auth/login")
+async def login(
+    credentials: OAuth2PasswordRequestForm = Depends(),
+    user_manager: UserManager = Depends(get_user_manager),
+):
+    """Login endpoint that returns both access and refresh tokens."""
+    user = await user_manager.authenticate(credentials)
+    if not user:
+        raise HTTPException(status_code=400, detail="LOGIN_BAD_CREDENTIALS")
+        
+    # Generate both tokens
+    access_strategy = AccessTokenStrategy()
+    refresh_strategy = RefreshTokenStrategy()
+    
+    access_token = await access_strategy.write_token(user)
+    refresh_token = await refresh_strategy.write_token(user)
+    
+    response = {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "refresh_token": refresh_token
+    }
+    
+    return response

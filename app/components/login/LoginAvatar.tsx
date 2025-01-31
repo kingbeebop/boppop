@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useRouter } from 'next/router';
 import { AppDispatch, RootState } from '../../redux/store';
-import { logout } from '../../redux/slices/authSlice';
+import { logout, openLoginModal } from '../../redux/slices/authSlice';
 import {
   Avatar,
   IconButton,
@@ -41,8 +41,6 @@ export const LoginAvatar: React.FC = () => {
     user?.artistId ? state.artists.byId[user.artistId] : null
   );
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [loginOpen, setLoginOpen] = useState(false);
-  const [registerOpen, setRegisterOpen] = useState(false);
 
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -66,35 +64,17 @@ export const LoginAvatar: React.FC = () => {
     handleCloseMenu();
   };
 
-  const handleRegisterClick = () => {
-    setLoginOpen(false);
-    setRegisterOpen(true);
-  };
-
-  const handleLoginClick = () => {
-    setRegisterOpen(false);
-    setLoginOpen(true);
-  };
-
   if (!user) {
     return (
-      <>
-        <Tooltip title="Login">
-          <IconButton onClick={() => setLoginOpen(true)} size="small" sx={{ ml: 2 }}>
-            <LoginIcon />
-          </IconButton>
-        </Tooltip>
-        <Login 
-          open={loginOpen} 
-          onClose={() => setLoginOpen(false)}
-          onRegisterClick={handleRegisterClick}
-        />
-        <Register
-          open={registerOpen}
-          onClose={() => setRegisterOpen(false)}
-          onLoginClick={handleLoginClick}
-        />
-      </>
+      <Tooltip title="Login">
+        <IconButton 
+          onClick={() => dispatch(openLoginModal())} 
+          size="small" 
+          sx={{ ml: 2 }}
+        >
+          <LoginIcon />
+        </IconButton>
+      </Tooltip>
     );
   }
 

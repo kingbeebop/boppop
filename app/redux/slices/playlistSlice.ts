@@ -58,14 +58,14 @@ const playlistSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchPlaylists.fulfilled, (state, action) => {
-        if (!action.payload?.playlists) {
+        if (!action.payload) {
           state.error = 'Invalid response format';
           state.loading = false;
           return;
         }
 
         state.loading = false;
-        const { edges, pageInfo, totalCount } = action.payload.playlists;
+        const { edges, pageInfo, totalCount } = action.payload;
         
         if (!action.meta.arg.after) {
           state.byId = {};

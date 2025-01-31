@@ -43,7 +43,7 @@ export const fetchArtists = createAsyncThunk(
 
 export const fetchArtist = createAsyncThunk(
   'artists/fetchArtist',
-  async (id: number) => {
+  async (id: string) => {
     const response = await getArtist(id);
     return response;
   }
@@ -64,14 +64,14 @@ const artistSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchArtists.fulfilled, (state, action) => {
-        if (!action.payload?.artists) {
+        if (!action.payload) {
           state.error = 'Invalid response format';
           state.loading = false;
           return;
         }
 
         state.loading = false;
-        const { edges, pageInfo, totalCount } = action.payload.artists;
+        const { edges, pageInfo, totalCount } = action.payload;
         
         // Clear existing data when it's a new search
         if (!action.meta.arg.after) {

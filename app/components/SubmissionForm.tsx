@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../redux/store';
-import { submitSubmission } from '../redux/slices/submissionSlice';
+import { submitSubmission, updateFormField } from '../redux/slices/submissionSlice';
 import { openLoginModal } from '../redux/slices/authSlice';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
@@ -10,50 +10,48 @@ import {
   TextField,
   Button,
   Alert,
-  Paper,
-  Typography,
   CircularProgress,
   Stack,
-  Fade,
 } from '@mui/material';
 import { CloudUpload as CloudUploadIcon } from '@mui/icons-material';
 
 const validationSchema = Yup.object({
-  title: Yup.string()
-    .required('Title is required')
-    .min(2, 'Title must be at least 2 characters')
-    .max(100, 'Title must be less than 100 characters'),
+  title: Yup.string().required('Title is required'),
   url: Yup.string()
-    .required('SoundCloud URL is required')
-    .url('Must be a valid URL')
+    .required('URL is required')
     .matches(
-      /^https?:\/\/(soundcloud\.com|snd\.sc)\/.+$/,
+      /^https?:\/\/(soundcloud\.com|on\.soundcloud\.com)\/(.+)$/,
       'Must be a valid SoundCloud URL'
     ),
 });
 
 const SubmissionForm: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const [submissionSuccess, setSubmissionSuccess] = React.useState(false);
-  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const isAuthenticated = useSelector((state: RootState) => {
+    console.log('Auth State:', {
+      isAuthenticated: state.auth.isAuthenticated,
+      user: state.auth.user,
+      token: state.auth.token
+    });
+    return state.auth.isAuthenticated;
+  });
+  const { form, loading, error } = useSelector((state: RootState) => state.submission);
 
   const formik = useFormik({
-    initialValues: {
-      title: '',
-      url: '',
-    },
+    initialValues: form,
     validationSchema,
-    onSubmit: async (values, { setSubmitting, resetForm }) => {
-      if (!isAuthenticated) {
-        dispatch(openLoginModal());
-        setSubmitting(false);
-        return;
-      }
-
+    enableReinitialize: true,
+    onSubmit: async (values, { setSubmitting }) => {
       try {
+        // Check auth state first
+        console.log('isAuthenticated', isAuthenticated);
+        if (!isAuthenticated) {
+          dispatch(openLoginModal());
+          return;
+        }
+
+        // Only try to submit if authenticated
         await dispatch(submitSubmission(values)).unwrap();
-        setSubmissionSuccess(true);
-        resetForm();
       } catch (error) {
         console.error('Submission failed:', error);
       } finally {
@@ -62,80 +60,70 @@ const SubmissionForm: React.FC = () => {
     },
   });
 
-  if (submissionSuccess) {
-    return (
-      <Fade in>
-        <Box sx={{ maxWidth: 600, mx: 'auto', p: 3 }}>
-          <Alert severity="success" sx={{ mb: 2 }}>
-            Song submitted successfully!
-          </Alert>
-          <Button
-            variant="outlined"
-            onClick={() => setSubmissionSuccess(false)}
-            fullWidth
-          >
-            Submit Another Song
-          </Button>
-        </Box>
-      </Fade>
-    );
-  }
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    dispatch(updateFormField({ field: name as 'title' | 'url', value }));
+    formik.handleChange(e);
+  };
+
+  // Updated form validation logic
+  const isFormValid = 
+    formik.values.title.trim() !== '' && 
+    formik.values.url.trim() !== '' && 
+    Object.keys(formik.errors).length === 0;
+
+  console.log('Form State:', {
+    values: formik.values,
+    errors: formik.errors,
+    isAuthenticated,
+    isFormValid,
+  });
 
   return (
-    <Fade in>
-      <Paper elevation={3} sx={{ maxWidth: 600, mx: 'auto', p: 3 }}>
-        <form onSubmit={formik.handleSubmit}>
-          <Stack spacing={3}>
-            <Typography variant="h5" component="h2" gutterBottom>
-              Submit Your Song
-            </Typography>
+    <form onSubmit={formik.handleSubmit}>
+      <Stack spacing={3}>
+        {error && (
+          <Alert severity="error">{error}</Alert>
+        )}
 
-            <TextField
-              fullWidth
-              id="title"
-              name="title"
-              label="Song Title"
-              value={formik.values.title}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              error={formik.touched.title && Boolean(formik.errors.title)}
-              helperText={formik.touched.title && formik.errors.title}
-            />
+        <TextField
+          fullWidth
+          id="title"
+          name="title"
+          label="Song Title"
+          value={formik.values.title}
+          onChange={handleChange}
+          onBlur={formik.handleBlur}
+          error={formik.touched.title && Boolean(formik.errors.title)}
+          helperText={formik.touched.title && formik.errors.title}
+          disabled={formik.isSubmitting || loading}
+        />
 
-            <TextField
-              fullWidth
-              id="url"
-              name="url"
-              label="SoundCloud URL"
-              value={formik.values.url}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              error={formik.touched.url && Boolean(formik.errors.url)}
-              helperText={
-                (formik.touched.url && formik.errors.url) ||
-                'Paste your SoundCloud track URL here'
-              }
-            />
+        <TextField
+          fullWidth
+          id="url"
+          name="url"
+          label="SoundCloud URL"
+          value={formik.values.url}
+          onChange={handleChange}
+          onBlur={formik.handleBlur}
+          error={formik.touched.url && Boolean(formik.errors.url)}
+          helperText={formik.touched.url && formik.errors.url}
+          disabled={formik.isSubmitting || loading}
+        />
 
-            <Button
-              type="submit"
-              variant="contained"
-              size="large"
-              disabled={formik.isSubmitting}
-              startIcon={
-                formik.isSubmitting ? (
-                  <CircularProgress size={20} color="inherit" />
-                ) : (
-                  <CloudUploadIcon />
-                )
-              }
-            >
-              {formik.isSubmitting ? 'Submitting...' : 'Submit Song'}
-            </Button>
-          </Stack>
-        </form>
-      </Paper>
-    </Fade>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={!isFormValid || formik.isSubmitting || loading}
+            startIcon={loading ? <CircularProgress size={20} /> : <CloudUploadIcon />}
+          >
+            {loading ? 'Submitting...' : 'Submit Song'}
+          </Button>
+        </Box>
+      </Stack>
+    </form>
   );
 };
 

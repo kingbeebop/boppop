@@ -1,15 +1,16 @@
-from .artist import Artist, ArtistInput, ArtistUpdateInput
-from .song import Song, SongInput, SongUpdateInput
-from .playlist import Playlist, PlaylistInput, PlaylistUpdateInput
-from .review import Review, ReviewInput, ReviewUpdateInput
-from .vote import Vote, VoteInput, VoteUpdateInput
+from .artist import Artist
+from .song import Song
+from .playlist import Playlist
+from .review import Review
+from .vote import Vote
 from .pagination import PageInfo, PaginatedResponse
 
 __all__ = [
-    "Artist", "ArtistInput", "ArtistUpdateInput",
-    "Song", "SongInput", "SongUpdateInput",
-    "Playlist", "PlaylistInput", "PlaylistUpdateInput",
-    "Review", "ReviewInput", "ReviewUpdateInput",
-    "Vote", "VoteInput", "VoteUpdateInput",
-    "PageInfo", "PaginatedResponse"
+    "Artist",
+    "Song",
+    "Playlist",
+    "Review",
+    "Vote",
+    "PageInfo",
+    "PaginatedResponse"
 ]

@@ -7,32 +7,30 @@ const REVIEW_FIELDS = `
   song {
     id
     title
-    url
   }
   author {
     id
-    username
     name
   }
-  playlist {
-    id
-    number
-  }
-  created_at
-  updated_at
+  createdAt
+  updatedAt
 `;
 
-export async function getReviews(songId: number): Promise<Review[]> {
+export async function getReviews(playlistId: string): Promise<Review[]> {
   const query = `
-    query GetReviews($songId: ID!) {
-      reviews(songId: $songId) {
-        items {
-          ${REVIEW_FIELDS}
-        }
+    query GetReviews($playlistId: ID!) {
+      reviews(playlistId: $playlistId) {
+        ${REVIEW_FIELDS}
       }
     }
   `;
-  return (await graphqlRequest<{ reviews: { items: Review[] } }>(query, { songId })).reviews.items;
+
+  const response = await graphqlRequest<{ reviews: Review[] }>(
+    query,
+    { playlistId },
+    true
+  );
+  return response.reviews;
 }
 
 export async function createReview(songId: number, content: string): Promise<Review> {

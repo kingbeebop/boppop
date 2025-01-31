@@ -1,5 +1,5 @@
 import { graphqlRequest } from '../fetch';
-import { Song, Submission } from '../../types';
+import { Song } from '../../types';
 
 const SUBMISSION_FIELDS = `
   id
@@ -18,18 +18,14 @@ export async function getSubmission(): Promise<Song | null> {
     }
   `;
   
-  const response = await graphqlRequest<{ currentSubmission: Song | null }>(
-    query,
-    {},
-    true
-  );
+  const response = await graphqlRequest<{ currentSubmission: Song | null }>(query, {}, true);
   return response.currentSubmission;
 }
 
-export async function submitOrUpdateSubmission(data: Submission): Promise<Song> {
+export async function submitOrUpdateSubmission(data: { title: string; url: string }): Promise<Song> {
   const mutation = `
-    mutation SubmitOrUpdateSong($url: String!, $title: String!) {
-      submitOrUpdateSong(input: { url: $url, title: $title }) {
+    mutation SubmitOrUpdateSong($input: SongSubmissionInput!) {
+      submitOrUpdateSong(input: $input) {
         ${SUBMISSION_FIELDS}
       }
     }
@@ -37,7 +33,7 @@ export async function submitOrUpdateSubmission(data: Submission): Promise<Song> 
 
   const response = await graphqlRequest<{ submitOrUpdateSong: Song }>(
     mutation,
-    data,
+    { input: data },
     true
   );
   return response.submitOrUpdateSong;

@@ -21,13 +21,8 @@ export async function getChallenge(): Promise<Playlist> {
       }
     }
   `;
+  
   const response = await graphqlRequest<{ currentChallenge: Playlist }>(query, {}, true);
-  console.log('Raw GraphQL response:', response);  // Debug log
-  
-  if (!response.currentChallenge) {
-    throw new Error('No challenge data received');
-  }
-  
   return response.currentChallenge;
 }
 
@@ -39,7 +34,9 @@ export async function getLastChallenge(): Promise<Playlist> {
       }
     }
   `;
-  return (await graphqlRequest<{ lastChallenge: Playlist }>(query, {}, true)).lastChallenge;
+  
+  const response = await graphqlRequest<{ lastChallenge: Playlist }>(query, {}, true);
+  return response.lastChallenge;
 }
 
 // export async function getSubmission(): Promise<Song | null> {
@@ -65,5 +62,6 @@ export async function submitSong(data: Submission): Promise<void> {
       }
     }
   `;
-  await graphqlRequest(mutation, data, true);
+  
+  await graphqlRequest<{ submitSong: { id: string } }>(mutation, data, true);
 } 

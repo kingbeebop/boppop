@@ -1,32 +1,44 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import QueuePool
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.orm import declarative_base
 from core.config import settings
 
-# Use async PostgreSQL driver
-SQLALCHEMY_DATABASE_URL = f"postgresql+asyncpg://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_SERVER}/{settings.POSTGRES_DB}"
-
+# Create async engine
 engine = create_async_engine(
-    SQLALCHEMY_DATABASE_URL,
-    echo=settings.SQL_ECHO,
-    future=True,
+    settings.SQLALCHEMY_DATABASE_URL,
+    echo=settings.DB_ECHO,
     pool_size=20,
     max_overflow=10,
-    pool_timeout=30,
     pool_pre_ping=True,
 )
 
-AsyncSessionLocal = sessionmaker(
+# Create session maker
+async_session_maker = async_sessionmaker(
     engine,
     class_=AsyncSession,
     expire_on_commit=False,
-    autocommit=False,
-    autoflush=False,
+    autoflush=False
 )
 
-async def get_db():
-    async with AsyncSessionLocal() as session:
+# Create base class for declarative models
+Base = declarative_base()
+
+# For dependency injection
+async def get_session() -> AsyncSession:
+    async with async_session_maker() as session:
         try:
             yield session
         finally:
-            await session.close() 
+            await session.close()
+
+# Backwards compatibility
+get_db = get_session
+AsyncSessionLocal = async_session_maker
+
+__all__ = [
+    "Base",
+    "engine",
+    "get_db",
+    "get_session",
+    "AsyncSessionLocal",
+    "async_session_maker"
+] 

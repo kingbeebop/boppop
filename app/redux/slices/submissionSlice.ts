@@ -9,23 +9,30 @@ interface SubmissionData {
 
 interface SubmissionState {
   song: Song | null;
-  isLoading: boolean;
+  loading: boolean;
   error: string | null;
+  form: {
+    title: string;
+    url: string;
+  };
 }
 
 const initialState: SubmissionState = {
   song: null,
-  isLoading: false,
+  loading: false,
   error: null,
+  form: {
+    title: '',
+    url: '',
+  },
 };
 
 export const submitSubmission = createAsyncThunk(
   'submission/submitSubmission',
   async (formData: SubmissionData, { rejectWithValue }) => {
     try {
-      await submitOrUpdateSubmission(formData);
-      // Return the submitted data as a response
-      return formData;
+      const response = await submitOrUpdateSubmission(formData);
+      return response; // This should return a Song object from the API
     } catch (error: any) {
       return rejectWithValue(error.message);
     }
@@ -34,12 +41,12 @@ export const submitSubmission = createAsyncThunk(
 
 export const fetchSubmissionData = createAsyncThunk(
   'submission/fetchSubmissionData',
-  async () => {
+  async (_, { rejectWithValue }) => {
     try {
       const response = await getSubmission();
       return response;
     } catch (error: any) {
-      throw new Error('Error fetching submission data');
+      return rejectWithValue(error.message);
     }
   }
 );
@@ -48,52 +55,45 @@ const submissionSlice = createSlice({
   name: 'submission',
   initialState,
   reducers: {
-    fetchSubmissionStart(state) {
-      state.isLoading = true;
-      state.error = null;
+    updateFormField: (state, action: PayloadAction<{ field: 'title' | 'url'; value: string }>) => {
+      state.form[action.payload.field] = action.payload.value;
     },
-    fetchSubmissionSuccess(state, action: PayloadAction<Song>) {
-      state.song = action.payload;
-      state.isLoading = false;
-      state.error = null;
-    },
-    fetchSubmissionFailure(state, action: PayloadAction<string>) {
-      state.isLoading = false;
-      state.error = action.payload;
+    clearForm: (state) => {
+      state.form = initialState.form;
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(submitSubmission.pending, (state) => {
-        state.isLoading = true;
+        state.loading = true;
         state.error = null;
       })
-      .addCase(submitSubmission.fulfilled, (state, action: PayloadAction<SubmissionData>) => {
-        // Assuming submitOrUpdateSubmission returns the Song object
-        state.song = action.payload as Song; // Cast action.payload as Song
-        state.isLoading = false;
+      .addCase(submitSubmission.fulfilled, (state, action: PayloadAction<Song>) => {
+        state.song = action.payload;
+        state.loading = false;
         state.error = null;
+        state.form = initialState.form; // Clear form on successful submission
       })
       .addCase(submitSubmission.rejected, (state, action) => {
-        state.isLoading = false;
+        state.loading = false;
         state.error = action.payload as string;
       })
       .addCase(fetchSubmissionData.pending, (state) => {
-        state.isLoading = true;
+        state.loading = true;
         state.error = null;
       })
       .addCase(fetchSubmissionData.fulfilled, (state, action: PayloadAction<Song | null>) => {
         state.song = action.payload;
-        state.isLoading = false;
+        state.loading = false;
         state.error = null;
       })
       .addCase(fetchSubmissionData.rejected, (state, action) => {
-        state.isLoading = false;
+        state.loading = false;
         state.error = action.payload as string;
       });
   },
 });
 
-export const { fetchSubmissionStart, fetchSubmissionSuccess, fetchSubmissionFailure } = submissionSlice.actions;
+export const { updateFormField, clearForm } = submissionSlice.actions;
 
 export default submissionSlice.reducer;

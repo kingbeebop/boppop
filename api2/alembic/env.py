@@ -18,7 +18,7 @@ from models import Base
 config = context.config
 
 def get_url():
-    return settings.SYNC_SQLALCHEMY_DATABASE_URL
+    return settings.ALEMBIC_DATABASE_URL
 
 def get_async_url():
     return settings.SQLALCHEMY_DATABASE_URL

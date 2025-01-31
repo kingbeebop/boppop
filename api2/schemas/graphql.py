@@ -15,6 +15,11 @@ from graph.types.playlist import (
     PageInfo
 )
 from graph.types.artist import Artist  # Import Artist from graph.types.artist
+from graph.schema import schema
+from graph.inputs.song import SongSubmissionInput
+from graph.mutations.song import SongMutations
+from fastapi import Request
+from graph.context import get_graphql_context
 
 @strawberry.type
 class UserType:
@@ -234,7 +239,65 @@ class Query:
         after: Optional[str] = None,
         filter: Optional[PlaylistFilter] = None
     ) -> PlaylistConnection:
-        return await Playlist.get_playlists(info, first, after, filter)
+        context = info.context
+        
+        # Build base query with all needed relationships
+        query = (
+            select(PlaylistModel)
+            .options(
+                selectinload(PlaylistModel.songs).selectinload(Song.artist),  # Load songs and their artists
+                selectinload(PlaylistModel.winner),  # Load winner if exists
+            )
+            .order_by(PlaylistModel.date.desc())
+        )
+
+        # Apply filters
+        if after:
+            cursor_date = decode_cursor(after)
+            query = query.where(PlaylistModel.date < cursor_date)
+
+        if filter:
+            if filter.theme:
+                query = query.where(PlaylistModel.theme.ilike(f"%{filter.theme}%"))
+            if filter.active is not None:
+                query = query.where(PlaylistModel.active == filter.active)
+            if filter.contest is not None:
+                query = query.where(PlaylistModel.contest == filter.contest)
+
+        # Execute queries
+        count_result = await context.session.execute(
+            select(func.count()).select_from(query.subquery())
+        )
+        total_count = count_result.scalar_one()
+
+        result = await context.session.execute(
+            query.limit(first + 1)
+        )
+        playlists = result.unique().scalars().all()
+
+        # Handle pagination
+        has_next_page = len(playlists) > first
+        if has_next_page:
+            playlists = playlists[:-1]
+
+        edges = [
+            PlaylistEdge(
+                node=Playlist.from_db(playlist),
+                cursor=encode_cursor(str(playlist.date))
+            )
+            for playlist in playlists
+        ]
+
+        return PlaylistConnection(
+            edges=edges,
+            pageInfo=PageInfo(
+                hasNextPage=has_next_page,
+                hasPreviousPage=after is not None,
+                startCursor=edges[0].cursor if edges else None,
+                endCursor=edges[-1].cursor if edges else None
+            ),
+            totalCount=total_count
+        )
 
     @strawberry.field
     async def song(self, id: strawberry.ID) -> Optional[SongBasicType]:
@@ -317,50 +380,40 @@ class Query:
     @strawberry.field
     async def current_submission(self, info: strawberry.types.Info) -> Optional[SongBasicType]:
         """Get the current user's submission for the active playlist if it exists."""
-        # Get current user from context
-        user = info.context.get('user')
-        if not user:
+        context = info.context
+        if not context.user:
             return None
 
-        async with AsyncSessionLocal() as session:
-            # First get the current playlist (most recent by number)
-            playlist_query = (
-                select(PlaylistModel)
-                .order_by(PlaylistModel.number.desc())
-                .limit(1)
-            )
-            playlist_result = await session.execute(playlist_query)
-            current_playlist = playlist_result.scalar_one_or_none()
-            
-            if not current_playlist:
-                return None
+        # First get the current playlist (most recent by number)
+        playlist_result = await context.session.execute(
+            select(PlaylistModel)
+            .order_by(PlaylistModel.number.desc())
+            .limit(1)
+        )
+        current_playlist = playlist_result.scalar_one_or_none()
+        
+        if not current_playlist:
+            return None
 
-            # Then find if the user's artist has a song in this playlist
-            song_query = (
-                select(Song)
-                .join(Artist)
-                .options(selectinload(Song.artist))
-                .where(
-                    and_(
-                        Song.playlist_id == current_playlist.id,
-                        Artist.user_id == user.id
-                    )
+        # Then find if the user's artist has a song in this playlist
+        song_result = await context.session.execute(
+            select(Song)
+            .join(Artist)
+            .options(selectinload(Song.artist))
+            .where(
+                and_(
+                    Song.playlist_id == current_playlist.id,
+                    Artist.user_id == context.user.id
                 )
             )
-            
-            result = await session.execute(song_query)
-            song = result.scalar_one_or_none()
-            
-            if not song:
-                return None
+        )
+        
+        song = song_result.scalar_one_or_none()
+        
+        if not song:
+            return None
 
-            return SongBasicType(
-                id=str(song.id),
-                title=song.title,
-                url=song.url,
-                artistId=str(song.artist_id),
-                artistName=song.artist.name
-            )
+        return SongBasicType.from_db_model(song)
 
 # Conversion methods
 @classmethod
@@ -498,4 +551,78 @@ PlaylistBasicType.from_db_model = playlist_basic_from_db
 ReviewBasicType.from_db_model = review_basic_from_db
 VoteBasicType.from_db_model = vote_basic_from_db
 
-schema = strawberry.Schema(query=Query)
+# Make sure the schema is properly configured with all types
+
+@strawberry.type
+class Mutation:
+    @strawberry.mutation
+    async def submit_or_update_song(
+        self,
+        input: SongSubmissionInput,
+        info: strawberry.types.Info
+    ) -> SongBasicType:
+        context = info.context
+        
+        if not context.is_authenticated:
+            raise ValueError("Not authenticated")
+
+        if not context.artist:
+            raise ValueError("No artist profile found")
+
+        async with context.session.begin():
+            # Find active non-contest playlist
+            active_playlist = await context.session.execute(
+                select(PlaylistModel)
+                .where(and_(
+                    PlaylistModel.active == True,
+                    PlaylistModel.contest == False
+                ))
+            )
+            active_playlist = active_playlist.scalar_one_or_none()
+            if not active_playlist:
+                raise ValueError("No playlist currently accepting submissions")
+
+            # Look for existing submission
+            existing_song = await context.session.execute(
+                select(Song)
+                .options(selectinload(Song.artist))
+                .join(PlaylistModel.songs)
+                .where(and_(
+                    Song.artist_id == context.artist.id,
+                    PlaylistModel.id == active_playlist.id
+                ))
+            )
+            existing_song = existing_song.scalar_one_or_none()
+
+            if existing_song:
+                # Update existing submission
+                existing_song.title = input.title
+                existing_song.url = input.url
+                return SongBasicType.from_db_model(existing_song)
+            
+            # Create new submission
+            new_song = Song(
+                title=input.title,
+                url=input.url,
+                artist_id=context.artist.id,
+                playlist_id=active_playlist.id
+            )
+            context.session.add(new_song)
+            await context.session.flush()
+            await context.session.refresh(new_song)
+            
+            return SongBasicType.from_db_model(new_song)
+
+# Update the schema to include mutations
+schema = strawberry.Schema(
+    query=Query,
+    mutation=Mutation,
+    types=[SongSubmissionInput],
+    extensions=[
+        # Add any extensions you need
+    ]
+)
+
+# Create an async context manager for the schema
+async def get_context(request: Request):
+    return await get_graphql_context(request)

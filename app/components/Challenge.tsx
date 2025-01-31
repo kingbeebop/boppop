@@ -97,7 +97,7 @@ const Challenge: React.FC = () => {
             <MusicNoteIcon />
             Bop Pop {challenge.number}
           </Typography>
-          <Typography variant="h3" component="h1" gutterBottom>
+          <Typography variant="h3" component="h1" gutterBottom sx={{ textAlign: 'center' }}>
             {challenge.theme}
           </Typography>
           {challenge.contest && (

@@ -1,5 +1,5 @@
 import { graphqlRequest } from '../fetch';
-import { Playlist, PlaylistResponse } from '../../types';
+import { Playlist, PlaylistConnection } from '../../types';
 
 const PLAYLIST_FIELDS = `
   id
@@ -9,7 +9,6 @@ const PLAYLIST_FIELDS = `
   active
   contest
   songIds
-  winnerId
   createdAt
   updatedAt
 `;
@@ -17,21 +16,22 @@ const PLAYLIST_FIELDS = `
 export interface GetPlaylistsParams {
   first?: number;
   after?: string;
-  search?: string;
-  sortBy?: 'DATE' | 'NUMBER' | 'THEME';
-  sortDirection?: 'ASC' | 'DESC';
+  filter?: {
+    active?: boolean;
+    search?: string;
+    sortBy?: 'DATE' | 'NUMBER' | 'THEME';
+    sortDirection?: 'ASC' | 'DESC';
+  };
 }
 
 export async function getPlaylists({
   first = 10,
   after,
-  search,
-  sortBy,
-  sortDirection,
-}: GetPlaylistsParams = {}): Promise<PlaylistResponse> {
+  filter,
+}: GetPlaylistsParams = {}): Promise<PlaylistConnection> {
   const query = `
     query GetPlaylists(
-      $first: Int
+      $first: Int!
       $after: String
       $filter: PlaylistFilter
     ) {
@@ -57,18 +57,12 @@ export async function getPlaylists({
     }
   `;
 
-  const variables = {
-    first,
-    after,
-    filter: search ? {
-      search,
-      sortBy,
-      sortDirection
-    } : undefined
-  };
-
-  const response = await graphqlRequest<{ data: PlaylistResponse }>(query, variables);
-  return response.data;
+  const response = await graphqlRequest<{ playlists: PlaylistConnection }>(
+    query,
+    { first, after, filter },
+    true
+  );
+  return response.playlists;
 }
 
 export async function getPlaylist(id: string): Promise<Playlist> {
@@ -80,6 +74,10 @@ export async function getPlaylist(id: string): Promise<Playlist> {
     }
   `;
 
-  const response = await graphqlRequest<{ playlist: Playlist }>(query, { id: id.toString() });
+  const response = await graphqlRequest<{ playlist: Playlist }>(
+    query,
+    { id },
+    true
+  );
   return response.playlist;
 }

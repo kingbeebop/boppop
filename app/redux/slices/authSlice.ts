@@ -123,15 +123,20 @@ const authSlice = createSlice({
       state.error = null;
     },
     openLoginModal: (state) => {
-      state.showLoginModal = true;
-      state.showRegisterModal = false;
+      console.log('Opening login modal, auth state:', state.isAuthenticated);
+      if (!state.isAuthenticated) {
+        state.showLoginModal = true;
+        state.showRegisterModal = false;
+      }
     },
     closeLoginModal: (state) => {
       state.showLoginModal = false;
     },
     openRegisterModal: (state) => {
-      state.showRegisterModal = true;
-      state.showLoginModal = false;
+      if (!state.isAuthenticated) {
+        state.showRegisterModal = true;
+        state.showLoginModal = false;
+      }
     },
     closeRegisterModal: (state) => {
       state.showRegisterModal = false;
@@ -149,6 +154,7 @@ const authSlice = createSlice({
         state.token = action.payload.token;
         state.user = action.payload.user;
         state.error = null;
+        state.isAuthenticated = true;
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
@@ -171,6 +177,7 @@ const authSlice = createSlice({
       .addCase(logout.fulfilled, (state) => {
         state.token = null;
         state.user = null;
+        state.isAuthenticated = false;
       })
       // Init Auth
       .addCase(initAuth.pending, (state) => {
@@ -182,9 +189,11 @@ const authSlice = createSlice({
         if (action.payload) {
           state.token = action.payload.token;
           state.user = action.payload.user;
+          state.isAuthenticated = true;
         } else {
           state.token = null;
           state.user = null;
+          state.isAuthenticated = false;
         }
       })
       .addCase(initAuth.rejected, (state, action) => {
@@ -192,6 +201,7 @@ const authSlice = createSlice({
         state.error = action.payload as string;
         state.token = null;
         state.user = null;
+        state.isAuthenticated = false;
       });
   },
 });

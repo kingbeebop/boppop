@@ -1,11 +1,12 @@
 import { graphqlRequest } from '../fetch';
-import { Artist, ArtistResponse } from '../../types';
+import { Artist, ArtistConnection } from '../../types';
 
 const ARTIST_FIELDS = `
   id
   name
   bio
   profilePic
+  songIds
   createdAt
   updatedAt
 `;
@@ -24,10 +25,10 @@ export async function getArtists({
   search,
   sortBy,
   sortDirection,
-}: GetArtistsParams = {}): Promise<ArtistResponse> {
+}: GetArtistsParams = {}): Promise<ArtistConnection> {
   const query = `
     query GetArtists(
-      $first: Int
+      $first: Int!
       $after: String
       $filter: ArtistFilter
     ) {
@@ -56,14 +57,24 @@ export async function getArtists({
   const variables = {
     first,
     after,
-    ...(search && { filter: { search } })
+    ...(search && { 
+      filter: { 
+        search,
+        sortBy,
+        sortDirection 
+      }
+    })
   };
 
-  const response = await graphqlRequest<{ data: ArtistResponse }>(query, variables);
-  return response.data;
+  const response = await graphqlRequest<{ artists: ArtistConnection }>(
+    query,
+    variables,
+    true
+  );
+  return response.artists;
 }
 
-export async function getArtist(id: number): Promise<Artist> {
+export async function getArtist(id: string): Promise<Artist> {
   const query = `
     query GetArtist($id: ID!) {
       artist(id: $id) {
@@ -72,6 +83,10 @@ export async function getArtist(id: number): Promise<Artist> {
     }
   `;
 
-  const response = await graphqlRequest<{ artist: Artist }>(query, { id: id.toString() });
+  const response = await graphqlRequest<{ artist: Artist }>(
+    query,
+    { id },
+    true
+  );
   return response.artist;
 }
