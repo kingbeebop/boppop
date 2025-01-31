@@ -1,7 +1,8 @@
 from typing import List, TYPE_CHECKING
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
-from .base import Base, TimestampMixin
+from sqlalchemy.sql import func
+from .base import Base
 
 if TYPE_CHECKING:
     from .user import User
@@ -9,14 +10,16 @@ if TYPE_CHECKING:
     from .review import Review
     from .vote import Vote
 
-class Artist(Base, TimestampMixin):
+class Artist(Base):
     __tablename__ = "artists"
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String(100), nullable=False, unique=True)
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, nullable=False)
     bio = Column(String, nullable=True)
     profile_pic = Column(String, nullable=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relationships
     user = relationship("User", back_populates="artist")

@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from models.user import User
 from models.artist import Artist
 from db.session import get_session
-from core.auth import optional_user_with_artist, auth_backend
+from core.auth import optional_user_with_artist, auth_backend, AccessTokenStrategy
 from strawberry.fastapi import BaseContext
 
 @dataclass
@@ -20,7 +20,7 @@ class GraphQLContext(BaseContext):
     @property
     def is_authenticated(self) -> bool:
         """Check if user is authenticated."""
-        return self.user is not None and self.user.is_active
+        return bool(self.user and self.user.is_active)
 
     def get(self, key: str, default: Any = None) -> Any:
         """Compatibility method for older code that uses dict-style access."""
@@ -52,7 +52,7 @@ class GraphQLContext(BaseContext):
 
         token = auth_header.replace("Bearer ", "")
         try:
-            strategy = auth_backend.get_strategy()
+            strategy = AccessTokenStrategy()
             user_id = await strategy.read_token(token)
             if user_id:
                 return None  # Token is still valid
@@ -78,10 +78,17 @@ async def get_graphql_context(
     user: Optional[User] = Depends(optional_user_with_artist)
 ) -> GraphQLContext:
     """Create GraphQL context using FastAPI's dependency injection."""
-    return GraphQLContext(
+    context = GraphQLContext(
         request=request,
         session=session,
         response=Response(),
         user=user,
         artist=user.artist if user else None
     )
+    
+    # Try to refresh token if needed
+    new_token = await context.refresh_token_if_needed()
+    if new_token:
+        context.response.headers["X-New-Token"] = new_token
+    
+    return context

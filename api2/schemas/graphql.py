@@ -398,12 +398,13 @@ class Query:
         # Then find if the user's artist has a song in this playlist
         song_result = await context.session.execute(
             select(Song)
-            .join(Artist)
+            .join(Song.artist)
+            .join(Song.playlists)
             .options(selectinload(Song.artist))
             .where(
                 and_(
-                    Song.playlist_id == current_playlist.id,
-                    Artist.user_id == context.user.id
+                    PlaylistModel.id == current_playlist.id,
+                    Song.artist_id == context.artist.id if context.artist else None
                 )
             )
         )
@@ -569,49 +570,49 @@ class Mutation:
         if not context.artist:
             raise ValueError("No artist profile found")
 
-        async with context.session.begin():
-            # Find active non-contest playlist
-            active_playlist = await context.session.execute(
-                select(PlaylistModel)
-                .where(and_(
-                    PlaylistModel.active == True,
-                    PlaylistModel.contest == False
-                ))
-            )
-            active_playlist = active_playlist.scalar_one_or_none()
-            if not active_playlist:
-                raise ValueError("No playlist currently accepting submissions")
+        # Find active non-contest playlist
+        active_playlist = await context.session.execute(
+            select(PlaylistModel)
+            .where(and_(
+                PlaylistModel.active == True,
+                PlaylistModel.contest == False
+            ))
+        )
+        active_playlist = active_playlist.scalar_one_or_none()
+        if not active_playlist:
+            raise ValueError("No playlist currently accepting submissions")
 
-            # Look for existing submission
-            existing_song = await context.session.execute(
-                select(Song)
-                .options(selectinload(Song.artist))
-                .join(PlaylistModel.songs)
-                .where(and_(
-                    Song.artist_id == context.artist.id,
-                    PlaylistModel.id == active_playlist.id
-                ))
-            )
-            existing_song = existing_song.scalar_one_or_none()
+        # Look for existing submission
+        existing_song = await context.session.execute(
+            select(Song)
+            .join(Song.playlists)
+            .options(selectinload(Song.artist))
+            .where(and_(
+                PlaylistModel.id == active_playlist.id,
+                Song.artist_id == context.artist.id
+            ))
+        )
+        existing_song = existing_song.scalar_one_or_none()
 
-            if existing_song:
-                # Update existing submission
-                existing_song.title = input.title
-                existing_song.url = input.url
-                return SongBasicType.from_db_model(existing_song)
-            
-            # Create new submission
-            new_song = Song(
-                title=input.title,
-                url=input.url,
-                artist_id=context.artist.id,
-                playlist_id=active_playlist.id
-            )
-            context.session.add(new_song)
-            await context.session.flush()
-            await context.session.refresh(new_song)
-            
-            return SongBasicType.from_db_model(new_song)
+        if existing_song:
+            # Update existing submission
+            existing_song.title = input.title
+            existing_song.url = input.url
+            await context.session.commit()
+            return SongBasicType.from_db_model(existing_song)
+        
+        # Create new submission
+        new_song = Song(
+            title=input.title,
+            url=input.url,
+            artist_id=context.artist.id
+        )
+        new_song.playlists.append(active_playlist)
+        context.session.add(new_song)
+        await context.session.commit()
+        await context.session.refresh(new_song)
+        
+        return SongBasicType.from_db_model(new_song)
 
 # Update the schema to include mutations
 schema = strawberry.Schema(

@@ -17,7 +17,7 @@ const SongCard: React.FC<SongCardProps> = ({ songId }) => {
 
   useEffect(() => {
     console.log("CARD: ",songId);
-  }, []);
+  }, [songId]);
 
   useEffect(() => {
     console.log("Song: ",song);

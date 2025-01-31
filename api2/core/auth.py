@@ -6,12 +6,16 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from typing import Optional
 from datetime import datetime
+import logging
+import jwt
 
 from .config import settings
 from models.user import User
 from db.session import get_session
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+logger = logging.getLogger(__name__)
 
 class AccessTokenStrategy(JWTStrategy):
     """Strategy for short-lived access tokens."""
@@ -22,6 +26,19 @@ class AccessTokenStrategy(JWTStrategy):
             token_audience=["fastapi-users:auth"],
             algorithm="HS256",
         )
+
+    async def read_token(self, token: str) -> Optional[str]:
+        try:
+            payload = jwt.decode(
+                token,
+                self.secret,
+                audience=self.token_audience,
+                algorithms=[self.algorithm],
+            )
+            return payload.get("sub")
+        except jwt.PyJWTError as e:
+            logger.error(f"Token validation error: {str(e)}")
+            return None
 
 class RefreshTokenStrategy(JWTStrategy):
     """Strategy for long-lived refresh tokens."""
@@ -55,21 +72,31 @@ async def get_optional_user(
 ) -> Optional[User]:
     """Get current user without requiring authentication."""
     if not credentials:
+        logger.debug("No credentials provided")
         return None
         
     try:
         token = credentials.credentials
+        logger.debug(f"Validating token: {token[:20]}...")
+        
         strategy = AccessTokenStrategy()
         user_id = await strategy.read_token(token)
+        logger.debug(f"Token validation result - user_id: {user_id}")
+        
         if not user_id:
+            logger.debug("No user_id from token")
             return None
             
         user = await session.get(User, int(user_id))
+        logger.debug(f"Found user: {user.id if user else None}")
+        
         if not user or not user.is_active:
+            logger.debug("User not found or not active")
             return None
             
         return user
-    except Exception:
+    except Exception as e:
+        logger.error(f"Authentication error: {str(e)}")
         return None
 
 async def optional_user_with_artist(
