@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { getSubmission, submitOrUpdateSubmission } from '../../services/api'; // Import submitOrUpdateSubmission from utils/api
 import { Song } from '../../types'; // Import Song type from types file
 
+
 interface SubmissionData {
   title: string;
   url: string;
@@ -40,14 +41,10 @@ export const submitSubmission = createAsyncThunk(
 );
 
 export const fetchSubmissionData = createAsyncThunk(
-  'submission/fetchSubmissionData',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await getSubmission();
-      return response;
-    } catch (error: any) {
-      return rejectWithValue(error.message);
-    }
+  'submission/fetchData',
+  async () => {
+    const data = await getSubmission();
+    return data;
   }
 );
 
@@ -61,6 +58,11 @@ const submissionSlice = createSlice({
     clearForm: (state) => {
       state.form = initialState.form;
     },
+    clearSubmission: (state) => {
+      state.song = null;
+      state.loading = false;
+      state.error = null;
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -82,18 +84,17 @@ const submissionSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchSubmissionData.fulfilled, (state, action: PayloadAction<Song | null>) => {
-        state.song = action.payload;
+      .addCase(fetchSubmissionData.fulfilled, (state, action) => {
         state.loading = false;
-        state.error = null;
+        state.song = action.payload;
       })
       .addCase(fetchSubmissionData.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error = action.error.message || 'Failed to fetch submission';
       });
   },
 });
 
-export const { updateFormField, clearForm } = submissionSlice.actions;
+export const { updateFormField, clearForm, clearSubmission } = submissionSlice.actions;
 
 export default submissionSlice.reducer;

@@ -1,6 +1,7 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { loginUser, registerUser, logoutUser, getCurrentUser, initializeAuth } from '../../services/api/auth';
 import type { User, Login, Registration } from '../../types';
+import { fetchSubmissionData, clearSubmission } from './submissionSlice';
 
 // Define and export the AuthState interface
 export interface AuthState {
@@ -25,34 +26,20 @@ const initialState: AuthState = {
 
 export const login = createAsyncThunk(
   'auth/login',
-  async (credentials: Login, { rejectWithValue }) => {
+  async (credentials: Login, { dispatch, rejectWithValue }) => {
     try {
-      // First, get the token
       const authResponse = await loginUser(credentials);
-      
       if (!authResponse.access_token) {
         return rejectWithValue('No access token received');
       }
-
-      // Then get the user data
-      try {
-        const userData = await getCurrentUser();
-        return {
-          token: authResponse.access_token,
-          user: userData
-        };
-      } catch (userError) {
-        // If we can't get user data, still return the token
-        return {
-          token: authResponse.access_token,
-          user: null
-        };
-      }
+      const userData = await getCurrentUser();
+      dispatch(fetchSubmissionData());
+      return {
+        token: authResponse.access_token,
+        user: userData
+      };
     } catch (error) {
-      console.error('Login error:', error);
-      return rejectWithValue(
-        error instanceof Error ? error.message : 'Login failed'
-      );
+      return rejectWithValue(error instanceof Error ? error.message : 'Login failed');
     }
   }
 );
@@ -87,9 +74,10 @@ export const register = createAsyncThunk(
 
 export const logout = createAsyncThunk(
   'auth/logout',
-  async () => {
+  async (_, { dispatch }) => {
     await logoutUser();
     localStorage.removeItem('token');
+    dispatch(clearSubmission());
     return null;
   }
 );
@@ -140,6 +128,18 @@ const authSlice = createSlice({
     },
     closeRegisterModal: (state) => {
       state.showRegisterModal = false;
+    },
+    loginSuccess: (state, action: PayloadAction<User>) => {
+      state.isAuthenticated = true;
+      state.user = action.payload;
+      state.loading = false;
+      state.error = null;
+    },
+    logout: (state) => {
+      state.isAuthenticated = false;
+      state.user = null;
+      state.loading = false;
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
@@ -212,5 +212,7 @@ export const {
   closeLoginModal,
   openRegisterModal,
   closeRegisterModal,
+  loginSuccess,
 } = authSlice.actions;
+
 export default authSlice.reducer;

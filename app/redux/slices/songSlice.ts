@@ -59,6 +59,13 @@ const songSlice = createSlice({
       if (state.selectedSong?.id === id) {
         state.selectedSong = null;
       }
+    },
+    clearSongs: (state) => {
+      state.byId = {};
+      state.allIds = [];
+      state.selectedSong = null;
+      state.loading = false;
+      state.error = null;
     }
   },
   extraReducers: (builder) => {
@@ -87,7 +94,8 @@ export const {
   setSelectedSong, 
   addSong, 
   updateSong, 
-  removeSong 
+  removeSong,
+  clearSongs 
 } = songSlice.actions;
 
 // Selectors

@@ -1,4 +1,4 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, ThunkAction, Action } from '@reduxjs/toolkit';
 import playlistReducer from './slices/playlistSlice';
 import authReducer from './slices/authSlice';
 import songReducer from './slices/songSlice';

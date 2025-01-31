@@ -5,7 +5,6 @@ import {
   fetchChallenge, 
   selectChallenge
 } from '../redux/slices/challengeSlice';
-import { fetchSubmissionData } from '../redux/slices/submissionSlice';
 import { addSong } from '../redux/slices/songSlice';
 import SubmissionForm from './SubmissionForm';
 import SongCard from './playlist/SongCard';
@@ -37,27 +36,14 @@ const Challenge: React.FC = () => {
   useEffect(() => {
     console.log('Challenge useEffect triggered');
     dispatch(fetchChallenge());
-    dispatch(fetchSubmissionData());
   }, [dispatch]);
 
-  // // Add song to songs slice when currentSubmission changes
-  // useEffect(() => {
-  //   if (currentSubmission) {
-  //     dispatch(addSong({
-  //       id: currentSubmission.id,
-  //       title: currentSubmission.title,
-  //       url: currentSubmission.url,
-  //       artistId: currentSubmission.artistId,
-  //       artistName: currentSubmission.artistName
-  //     }));
-  //   }
-  // }, [currentSubmission, dispatch]);
-    // Add song to songs slice when currentSubmission changes
-    useEffect(() => {
-      if (currentSubmission) {
-        dispatch(addSong(currentSubmission));
-      }
-    }, [currentSubmission, dispatch]);
+  // Add song to songs slice when currentSubmission changes
+  useEffect(() => {
+    if (currentSubmission) {
+      dispatch(addSong(currentSubmission));
+    }
+  }, [currentSubmission, dispatch]);
 
   // Show loading state only during initial load
   if (challenge.status === 'loading' && !challenge.theme) {
