@@ -6,7 +6,9 @@ import {
   selectChallenge
 } from '../redux/slices/challengeSlice';
 import { fetchSubmissionData } from '../redux/slices/submissionSlice';
+import { addSong } from '../redux/slices/songSlice';
 import SubmissionForm from './SubmissionForm';
+import SongCard from './playlist/SongCard';
 import { 
   Box, 
   Typography, 
@@ -37,6 +39,25 @@ const Challenge: React.FC = () => {
     dispatch(fetchChallenge());
     dispatch(fetchSubmissionData());
   }, [dispatch]);
+
+  // // Add song to songs slice when currentSubmission changes
+  // useEffect(() => {
+  //   if (currentSubmission) {
+  //     dispatch(addSong({
+  //       id: currentSubmission.id,
+  //       title: currentSubmission.title,
+  //       url: currentSubmission.url,
+  //       artistId: currentSubmission.artistId,
+  //       artistName: currentSubmission.artistName
+  //     }));
+  //   }
+  // }, [currentSubmission, dispatch]);
+    // Add song to songs slice when currentSubmission changes
+    useEffect(() => {
+      if (currentSubmission) {
+        dispatch(addSong(currentSubmission));
+      }
+    }, [currentSubmission, dispatch]);
 
   // Show loading state only during initial load
   if (challenge.status === 'loading' && !challenge.theme) {
@@ -116,26 +137,9 @@ const Challenge: React.FC = () => {
               Current Submission
             </Typography>
             <Divider sx={{ my: 2 }} />
-            <Stack spacing={2}>
-              <Typography variant="body1">
-                <strong>Title:</strong> {currentSubmission.title}
-              </Typography>
-              <Box>
-                <MuiLink 
-                  href={currentSubmission.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  sx={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 1
-                  }}
-                >
-                  <MusicNoteIcon fontSize="small" />
-                  Listen on SoundCloud
-                </MuiLink>
-              </Box>
-            </Stack>
+            <Box sx={{ my: 2 }}>
+              <SongCard songId={currentSubmission.id} />
+            </Box>
           </Paper>
         )}
 

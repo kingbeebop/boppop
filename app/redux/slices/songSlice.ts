@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 import { getSongsByIds } from '../../services/api/song';
 import { Song } from '../../types';
@@ -35,6 +35,31 @@ const songSlice = createSlice({
     setSelectedSong: (state, action) => {
       state.selectedSong = state.byId[action.payload];
     },
+    addSong: (state, action: PayloadAction<Song>) => {
+      const song = action.payload;
+      // Only add if it's not already in the store or if it's different
+      if (!state.byId[song.id] || 
+          JSON.stringify(state.byId[song.id]) !== JSON.stringify(song)) {
+        state.byId[song.id] = song;
+        if (!state.allIds.includes(song.id)) {
+          state.allIds.push(song.id);
+        }
+      }
+    },
+    updateSong: (state, action: PayloadAction<Partial<Song> & { id: string }>) => {
+      const { id, ...updates } = action.payload;
+      if (state.byId[id]) {
+        state.byId[id] = { ...state.byId[id], ...updates };
+      }
+    },
+    removeSong: (state, action: PayloadAction<string>) => {
+      const id = action.payload;
+      delete state.byId[id];
+      state.allIds = state.allIds.filter(songId => songId !== id);
+      if (state.selectedSong?.id === id) {
+        state.selectedSong = null;
+      }
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -58,8 +83,20 @@ const songSlice = createSlice({
   },
 });
 
-export const { setSelectedSong } = songSlice.actions;
-export const selectSongs = (state: RootState) => state.songs.allIds.map(id => state.songs.byId[id]);
+export const { 
+  setSelectedSong, 
+  addSong, 
+  updateSong, 
+  removeSong 
+} = songSlice.actions;
+
+// Selectors
+export const selectSongs = (state: RootState) => 
+  state.songs.allIds.map(id => state.songs.byId[id]);
+
+export const selectSongById = (id: string) => (state: RootState) => 
+  state.songs.byId[id];
+
 export const selectSongsState = (state: RootState) => state.songs;
 
 export default songSlice.reducer;
