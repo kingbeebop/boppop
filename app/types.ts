@@ -54,7 +54,6 @@ export interface Playlist {
   active: boolean;
   contest: boolean;
   songIds: string[];
-  winnerId?: string;
   createdAt: string;
   updatedAt: string;
 }

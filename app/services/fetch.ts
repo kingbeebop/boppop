@@ -44,9 +44,15 @@ export async function graphqlRequest<T>(
   variables?: Record<string, any>,
   isProtected = false
 ): Promise<T> {
-  return baseFetch<T>('/graphql', {
+  const response = await baseFetch<{ data: T }>('/graphql', {
     method: 'POST',
     body: JSON.stringify({ query, variables }),
   });
+
+  if (!response.data) {
+    throw new Error('No data received from GraphQL');
+  }
+
+  return response.data;
 }
 

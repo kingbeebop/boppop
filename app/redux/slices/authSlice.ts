@@ -5,11 +5,12 @@ import type { User, Login, Registration } from '../../types';
 // Define and export the AuthState interface
 export interface AuthState {
   token: string | null;
-  user: any | null;
+  user: User | null;
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;
   showLoginModal: boolean;
+  showRegisterModal: boolean;
 }
 
 const initialState: AuthState = {
@@ -19,6 +20,7 @@ const initialState: AuthState = {
   error: null,
   isAuthenticated: false,
   showLoginModal: false,
+  showRegisterModal: false,
 };
 
 export const login = createAsyncThunk(
@@ -122,9 +124,17 @@ const authSlice = createSlice({
     },
     openLoginModal: (state) => {
       state.showLoginModal = true;
+      state.showRegisterModal = false;
     },
     closeLoginModal: (state) => {
       state.showLoginModal = false;
+    },
+    openRegisterModal: (state) => {
+      state.showRegisterModal = true;
+      state.showLoginModal = false;
+    },
+    closeRegisterModal: (state) => {
+      state.showRegisterModal = false;
     },
   },
   extraReducers: (builder) => {
@@ -186,5 +196,11 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError, openLoginModal, closeLoginModal } = authSlice.actions;
+export const {
+  clearError,
+  openLoginModal,
+  closeLoginModal,
+  openRegisterModal,
+  closeRegisterModal,
+} = authSlice.actions;
 export default authSlice.reducer;

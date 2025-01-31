@@ -5,7 +5,7 @@ from enum import Enum
 from sqlalchemy import select, or_, func, and_
 from sqlalchemy.orm import selectinload
 from db.session import AsyncSessionLocal
-from models import User, Artist as ArtistModel, Song, Review, Vote
+from models import User, Artist as ArtistModel, Song, Review, Vote, Playlist as PlaylistModel
 from .utils import encode_cursor, decode_cursor
 from graph.types.playlist import (
     Playlist,
@@ -280,9 +280,9 @@ class Query:
         async with AsyncSessionLocal() as session:
             # Get the playlist with the highest number (most recent)
             query = (
-                select(Playlist)
-                .options(selectinload(Playlist.songs))
-                .order_by(Playlist.number.desc())
+                select(PlaylistModel)
+                .options(selectinload(PlaylistModel.songs))
+                .order_by(PlaylistModel.number.desc())
                 .limit(1)
             )
             
@@ -293,6 +293,74 @@ class Query:
                 return None
                 
             return PlaylistType.from_db_model(playlist)
+
+    @strawberry.field
+    async def last_challenge(self) -> Optional[PlaylistType]:
+        """Get the previous playlist (second most recent)."""
+        async with AsyncSessionLocal() as session:
+            query = (
+                select(PlaylistModel)
+                .options(selectinload(PlaylistModel.songs))
+                .order_by(PlaylistModel.number.desc())
+                .offset(1)  # Skip the current challenge
+                .limit(1)
+            )
+            
+            result = await session.execute(query)
+            playlist = result.scalar_one_or_none()
+            
+            if not playlist:
+                return None
+                
+            return PlaylistType.from_db_model(playlist)
+
+    @strawberry.field
+    async def current_submission(self, info: strawberry.types.Info) -> Optional[SongBasicType]:
+        """Get the current user's submission for the active playlist if it exists."""
+        # Get current user from context
+        user = info.context.get('user')
+        if not user:
+            return None
+
+        async with AsyncSessionLocal() as session:
+            # First get the current playlist (most recent by number)
+            playlist_query = (
+                select(PlaylistModel)
+                .order_by(PlaylistModel.number.desc())
+                .limit(1)
+            )
+            playlist_result = await session.execute(playlist_query)
+            current_playlist = playlist_result.scalar_one_or_none()
+            
+            if not current_playlist:
+                return None
+
+            # Then find if the user's artist has a song in this playlist
+            song_query = (
+                select(Song)
+                .join(Artist)
+                .options(selectinload(Song.artist))
+                .where(
+                    and_(
+                        Song.playlist_id == current_playlist.id,
+                        Artist.user_id == user.id
+                    )
+                )
+            )
+            
+            result = await session.execute(song_query)
+            song = result.scalar_one_or_none()
+            
+            if not song:
+                return None
+
+            return SongBasicType(
+                id=str(song.id),
+                title=song.title,
+                url=song.url,
+                artistId=str(song.artist_id),
+                artistName=song.artist.name
+            )
 
 # Conversion methods
 @classmethod
@@ -348,7 +416,7 @@ def user_from_db(cls, db_user: User) -> "UserType":
     )
 
 @classmethod
-def playlist_from_db(cls, db_playlist: Playlist) -> "PlaylistType":
+def playlist_from_db(cls, db_playlist: PlaylistModel) -> "PlaylistType":
     return cls(
         id=str(db_playlist.id),
         number=db_playlist.number,
@@ -387,7 +455,7 @@ def vote_from_db(cls, db_vote: Vote) -> "VoteType":
     )
 
 @classmethod
-def playlist_basic_from_db(cls, db_playlist: Playlist) -> "PlaylistBasicType":
+def playlist_basic_from_db(cls, db_playlist: PlaylistModel) -> "PlaylistBasicType":
     return cls(
         id=db_playlist.id,
         number=db_playlist.number,

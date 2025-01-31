@@ -5,10 +5,8 @@ const SUBMISSION_FIELDS = `
   id
   title
   url
-  artist {
-    id
-    username
-  }
+  artistId
+  artistName
 `;
 
 export async function getSubmission(): Promise<Song | null> {
