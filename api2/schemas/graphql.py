@@ -239,65 +239,67 @@ class Query:
         after: Optional[str] = None,
         filter: Optional[PlaylistFilter] = None
     ) -> PlaylistConnection:
-        context = info.context
-        
-        # Build base query with all needed relationships
-        query = (
-            select(PlaylistModel)
-            .options(
-                selectinload(PlaylistModel.songs).selectinload(Song.artist),  # Load songs and their artists
-                selectinload(PlaylistModel.winner),  # Load winner if exists
+        async with info.context.session.begin():
+            query = (
+                select(PlaylistModel)
+                .options(
+                    selectinload(PlaylistModel.songs).selectinload(Song.artist),
+                    selectinload(PlaylistModel.winner)
+                )
+                .order_by(PlaylistModel.date.desc())
             )
-            .order_by(PlaylistModel.date.desc())
-        )
 
-        # Apply filters
-        if after:
-            cursor_date = decode_cursor(after)
-            query = query.where(PlaylistModel.date < cursor_date)
+            if filter:
+                conditions = []
+                if filter.search:
+                    conditions.append(PlaylistModel.theme.ilike(f"%{filter.search}%"))
+                if filter.active is not None:
+                    conditions.append(PlaylistModel.active == filter.active)
+                if filter.contest is not None:
+                    conditions.append(PlaylistModel.contest == filter.contest)
+                if conditions:
+                    query = query.where(or_(*conditions))
 
-        if filter:
-            if filter.theme:
-                query = query.where(PlaylistModel.theme.ilike(f"%{filter.theme}%"))
-            if filter.active is not None:
-                query = query.where(PlaylistModel.active == filter.active)
-            if filter.contest is not None:
-                query = query.where(PlaylistModel.contest == filter.contest)
+            # Apply cursor-based pagination
+            if after:
+                cursor_date = decode_cursor(after)
+                query = query.where(PlaylistModel.date < cursor_date)
 
-        # Execute queries
-        count_result = await context.session.execute(
-            select(func.count()).select_from(query.subquery())
-        )
-        total_count = count_result.scalar_one()
-
-        result = await context.session.execute(
-            query.limit(first + 1)
-        )
-        playlists = result.unique().scalars().all()
-
-        # Handle pagination
-        has_next_page = len(playlists) > first
-        if has_next_page:
-            playlists = playlists[:-1]
-
-        edges = [
-            PlaylistEdge(
-                node=Playlist.from_db(playlist),
-                cursor=encode_cursor(str(playlist.date))
+            # Get total count
+            count_result = await info.context.session.execute(
+                select(func.count()).select_from(query.subquery())
             )
-            for playlist in playlists
-        ]
+            total_count = count_result.scalar_one()
 
-        return PlaylistConnection(
-            edges=edges,
-            pageInfo=PageInfo(
-                hasNextPage=has_next_page,
-                hasPreviousPage=after is not None,
-                startCursor=edges[0].cursor if edges else None,
-                endCursor=edges[-1].cursor if edges else None
-            ),
-            totalCount=total_count
-        )
+            # Get playlists
+            result = await info.context.session.execute(
+                query.limit(first + 1)
+            )
+            playlists = result.unique().scalars().all()
+
+            # Handle pagination
+            has_next_page = len(playlists) > first
+            if has_next_page:
+                playlists = playlists[:-1]
+
+            edges = [
+                PlaylistEdge(
+                    node=Playlist.from_db(playlist),
+                    cursor=encode_cursor(str(playlist.date))
+                )
+                for playlist in playlists
+            ]
+
+            return PlaylistConnection(
+                edges=edges,
+                pageInfo=PageInfo(
+                    hasNextPage=has_next_page,
+                    hasPreviousPage=after is not None,
+                    startCursor=edges[0].cursor if edges else None,
+                    endCursor=edges[-1].cursor if edges else None
+                ),
+                totalCount=total_count
+            )
 
     @strawberry.field
     async def song(self, id: strawberry.ID) -> Optional[SongBasicType]:

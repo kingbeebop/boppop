@@ -14,6 +14,7 @@ from schemas.utils import encode_cursor, decode_cursor
 
 @strawberry.input
 class PlaylistFilter:
+    search: Optional[str] = strawberry.field(default=None)
     theme: Optional[str] = strawberry.field(default=None)
     active: Optional[bool] = strawberry.field(default=None)
     contest: Optional[bool] = strawberry.field(default=None)
