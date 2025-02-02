@@ -3,14 +3,14 @@ import Link from 'next/link';
 import Countdown from './Countdown';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../redux/store';
-import { fetchChallenge, selectChallenge } from '../redux/slices/challengeSlice'; // Import fetchChallenge and selectChallenge from challengeSlice
+import { getChallenge, selectChallenge } from '../redux/slices/challengeSlice'; // Import fetchChallenge and selectChallenge from challengeSlice
 
 const ChallengeLink: React.FC = () => {
   const { theme, contest } = useSelector(selectChallenge); // Get theme and contest from challengeSlice
   const dispatch = useDispatch<any>();
 
   useEffect(() => {
-    dispatch(fetchChallenge());
+    dispatch(getChallenge());
   }, [dispatch]);
 
   return (

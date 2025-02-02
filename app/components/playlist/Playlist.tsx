@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../redux/store';
-import { fetchPlaylist } from '../../redux/slices/playlistSlice';
-import { fetchSongsByIds } from '../../redux/slices/songSlice';
+import { getPlaylistById } from '../../redux/slices/playlistSlice';
+import { getSongsByIds } from '../../redux/slices/songSlice';
 import SongCard from '../playlist/SongCard';
 import { 
   Box, 
@@ -25,13 +25,13 @@ const Playlist: React.FC<PlaylistProps> = ({ id }) => {
 
   useEffect(() => {
     if (!playlist) {
-      dispatch(fetchPlaylist(id));
+      dispatch(getPlaylistById(id));
     }
   }, [dispatch, id, playlist]);
 
   useEffect(() => {
     if (playlist?.songIds.length) {
-      dispatch(fetchSongsByIds(playlist.songIds));
+      dispatch(getSongsByIds(playlist.songIds));
     }
   }, [dispatch, playlist?.songIds]);
 

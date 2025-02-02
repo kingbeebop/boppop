@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '../redux/store';
 import { 
-  fetchPlaylists, 
+  getPlaylists, 
   selectPlaylists,
   selectPlaylistsState,
   setSearch
@@ -23,7 +23,7 @@ const Archive: React.FC = () => {
   useEffect(() => {
     const loadPlaylists = async () => {
       try {
-        await dispatch(fetchPlaylists({ first: 10 })).unwrap();
+        await dispatch(getPlaylists({ first: 10 })).unwrap();
       } catch (err) {
         console.error('Failed to load playlists:', err);
       }
@@ -34,11 +34,11 @@ const Archive: React.FC = () => {
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSearch = event.target.value;
     dispatch(setSearch(newSearch));
-    dispatch(fetchPlaylists({ first: 10, filter: { search: newSearch } }));
+    dispatch(getPlaylists({ first: 10, filter: { search: newSearch } }));
   };
 
   const handleLoadMore = () => {
-    dispatch(fetchPlaylists({ 
+    dispatch(getPlaylists({ 
       first: 10, 
       after: endCursor ?? undefined,
       filter: { search }

@@ -1,5 +1,5 @@
 import { graphqlRequest } from '../fetch';
-import { Artist, ArtistConnection } from '../../types';
+import { Artist, ArtistConnection, GetArtistsParams } from '../../types';
 
 const ARTIST_FIELDS = `
   id
@@ -11,15 +11,7 @@ const ARTIST_FIELDS = `
   updatedAt
 `;
 
-export interface GetArtistsParams {
-  first?: number;
-  after?: string;
-  search?: string;
-  sortBy?: 'NAME';
-  sortDirection?: 'ASC' | 'DESC';
-}
-
-export async function getArtists({
+export async function fetchArtists({
   first = 10,
   after,
   search,
@@ -74,7 +66,7 @@ export async function getArtists({
   return response.artists;
 }
 
-export async function getArtist(id: string): Promise<Artist> {
+export async function fetchArtist(id: string): Promise<Artist | null> {
   const query = `
     query GetArtist($id: ID!) {
       artist(id: $id) {
@@ -83,7 +75,7 @@ export async function getArtist(id: string): Promise<Artist> {
     }
   `;
 
-  const response = await graphqlRequest<{ artist: Artist }>(
+  const response = await graphqlRequest<{ artist: Artist | null }>(
     query,
     { id },
     true

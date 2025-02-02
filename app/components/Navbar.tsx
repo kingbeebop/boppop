@@ -12,13 +12,17 @@ import {
   Info as InfoIcon,
   Add as AddIcon,
   People as PeopleIcon,
-  Archive as ArchiveIcon 
+  Archive as ArchiveIcon,
+  HowToVote as VoteIcon
 } from '@mui/icons-material';
 import { useRouter } from 'next/router';
 import LoginAvatar from './login/LoginAvatar';
+import { useSelector } from 'react-redux';
+import { RootState } from '../redux/store';
 
 const Navbar = () => {
   const router = useRouter();
+  const isContestMode = useSelector((state: RootState) => state.challenge.contest);
 
   const iconButtonStyle = {
     transition: 'transform 0.2s',
@@ -53,7 +57,7 @@ const Navbar = () => {
           </Tooltip>
           
           <Tooltip 
-            title="Submit Song" 
+            title={isContestMode ? "Vote Now" : "Submit Song"}
             enterDelay={200}
             leaveDelay={0}
             arrow
@@ -61,11 +65,11 @@ const Navbar = () => {
           >
             <IconButton
               color="inherit"
-              onClick={() => router.push('/challenge')}
-              aria-label="submit"
+              onClick={() => router.push(isContestMode ? '/contest' : '/challenge')}
+              aria-label={isContestMode ? "vote" : "submit"}
               sx={iconButtonStyle}
             >
-              <AddIcon />
+              {isContestMode ? <VoteIcon /> : <AddIcon />}
             </IconButton>
           </Tooltip>
           

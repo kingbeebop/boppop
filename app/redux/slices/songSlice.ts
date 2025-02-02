@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../store';
-import { getSongsByIds } from '../../services/api/song';
+import { fetchSong, fetchSongsByIds } from '../../services/api';
 import { Song } from '../../types';
 
 interface SongState {
@@ -19,12 +19,17 @@ const initialState: SongState = {
   error: null,
 };
 
-export const fetchSongsByIds = createAsyncThunk(
-  'songs/fetchSongsByIds',
+export const getSongsByIds = createAsyncThunk(
+  'songs/getSongsByIds',
   async (ids: string[]) => {
-    const songs = await getSongsByIds(ids);
-    console.log("Fetched songs:", songs);
-    return songs;
+    return await fetchSongsByIds(ids);
+  }
+);
+
+export const getSong = createAsyncThunk(
+  'songs/getSong',
+  async (id: string) => {
+    return await fetchSong(id);
   }
 );
 
@@ -70,11 +75,11 @@ const songSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchSongsByIds.pending, (state) => {
+      .addCase(getSongsByIds.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchSongsByIds.fulfilled, (state, action) => {
+      .addCase(getSongsByIds.fulfilled, (state, action) => {
         state.loading = false;
         action.payload.forEach(song => {
           state.byId[song.id] = song;
@@ -83,7 +88,7 @@ const songSlice = createSlice({
           }
         });
       })
-      .addCase(fetchSongsByIds.rejected, (state, action) => {
+      .addCase(getSongsByIds.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch songs';
       });

@@ -9,7 +9,7 @@ const SONG_FIELDS = `
   artistName
 `;
 
-export async function getSongsByIds(ids: string[]): Promise<Song[]> {
+export async function fetchSongsByIds(ids: string[]): Promise<Song[]> {
   const query = `
     query GetSongs($ids: [ID!]!) {
       songsByIds(ids: $ids) {
@@ -26,7 +26,7 @@ export async function getSongsByIds(ids: string[]): Promise<Song[]> {
   return response.songsByIds;
 }
 
-export async function getSong(id: string): Promise<Song> {
+export async function fetchSong(id: string): Promise<Song> {
   const query = `
     query GetSong($id: ID!) {
       song(id: $id) {

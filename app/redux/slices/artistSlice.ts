@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../store';
-import { getArtist, getArtists, GetArtistsParams } from '../../services/api';
-import { Artist } from '../../types';
+import { fetchArtist, fetchArtists } from '../../services/api';
+import { Artist, GetArtistsParams } from '../../types';
 
 interface ArtistState {
   // A lookup table of artists by their ID
@@ -34,18 +34,17 @@ const initialState: ArtistState = {
   totalCount: 0,
 };
 
-export const fetchArtists = createAsyncThunk(
-  'artists/fetchArtists',
+export const getArtists = createAsyncThunk(
+  'artists/getArtists',
   async (params: GetArtistsParams) => {
-    return await getArtists(params);
+    return await fetchArtists(params);
   }
 );
 
-export const fetchArtist = createAsyncThunk(
-  'artists/fetchArtist',
+export const getArtist = createAsyncThunk(
+  'artists/getArtist',
   async (id: string) => {
-    const response = await getArtist(id);
-    return response;
+    return await fetchArtist(id);
   }
 );
 
@@ -59,11 +58,11 @@ const artistSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchArtists.pending, (state) => {
+      .addCase(getArtists.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchArtists.fulfilled, (state, action) => {
+      .addCase(getArtists.fulfilled, (state, action) => {
         if (!action.payload) {
           state.error = 'Invalid response format';
           state.loading = false;
@@ -93,15 +92,17 @@ const artistSlice = createSlice({
         state.endCursor = pageInfo.endCursor;
         state.totalCount = totalCount;
       })
-      .addCase(fetchArtists.rejected, (state, action) => {
+      .addCase(getArtists.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch artists';
       })
-      .addCase(fetchArtist.fulfilled, (state, action) => {
+      .addCase(getArtist.fulfilled, (state, action) => {
         const artist = action.payload;
-        state.byId[artist.id] = artist;
-        if (!state.allIds.includes(artist.id)) {
-          state.allIds.push(artist.id);
+        if (artist) {
+          state.byId[artist.id] = artist;
+          if (!state.allIds.includes(artist.id)) {
+            state.allIds.push(artist.id);
+          }
         }
       });
   },

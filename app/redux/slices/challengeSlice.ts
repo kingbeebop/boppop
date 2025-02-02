@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 import { Artist, Playlist } from '../../types';
-import { getChallenge } from '../../services/api';
+import { fetchChallenge } from '../../services/api';
 
 interface ChallengeState {
   contest: boolean;
@@ -16,6 +16,7 @@ interface ChallengeState {
   updatedAt: string | null;
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
+  initialized: boolean;
 }
 
 const initialState: ChallengeState = {
@@ -31,20 +32,13 @@ const initialState: ChallengeState = {
   updatedAt: null,
   status: 'idle',
   error: null,
+  initialized: false,
 };
 
-export const fetchChallenge = createAsyncThunk(
-  'challenge/fetchChallenge',
+export const getChallenge = createAsyncThunk(
+  'challenge/getChallenge',
   async () => {
-    try {
-      console.log('Fetching challenge...');
-      const response = await getChallenge();
-      console.log('Challenge response:', response);
-      return response;
-    } catch (error) {
-      console.error('Challenge fetch error:', error);
-      throw new Error('Failed to fetch challenge data');
-    }
+    return await fetchChallenge();
   }
 );
 
@@ -54,11 +48,11 @@ const challengeSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(fetchChallenge.pending, (state) => {
+      .addCase(getChallenge.pending, (state) => {
         console.log('Challenge fetch pending');
         state.status = 'loading';
       })
-      .addCase(fetchChallenge.fulfilled, (state, action: PayloadAction<Playlist>) => {
+      .addCase(getChallenge.fulfilled, (state, action: PayloadAction<Playlist>) => {
         console.log('Challenge fetch fulfilled:', action.payload);
         state.status = 'succeeded';
         state.contest = action.payload.contest;
@@ -71,7 +65,7 @@ const challengeSlice = createSlice({
         state.createdAt = action.payload.createdAt;
         state.updatedAt = action.payload.updatedAt;
       })
-      .addCase(fetchChallenge.rejected, (state) => {
+      .addCase(getChallenge.rejected, (state) => {
         console.log('Challenge fetch rejected');
         state.status = 'failed';
         state.error = 'Failed to fetch challenge data';

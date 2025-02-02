@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../redux/store';
-import { fetchArtist } from '../redux/slices/artistSlice';
+import { getArtist } from '../redux/slices/artistSlice';
 import { Box, Typography, CircularProgress, Avatar } from '@mui/material';
 
 const ArtistPage: React.FC = () => {
@@ -24,7 +24,14 @@ const ArtistPage: React.FC = () => {
 
   useEffect(() => {
     if (artistId && !artist) {
-      dispatch(fetchArtist(artistId));
+      dispatch(getArtist(artistId))
+        .unwrap()
+        .then(result => {
+          if (!result) {
+            // Handle artist not found case
+            console.error('Artist not found');
+          }
+        });
     }
   }, [artistId, artist, dispatch]);
 

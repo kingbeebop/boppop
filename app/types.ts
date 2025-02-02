@@ -9,8 +9,9 @@ export interface Song {
 export interface Artist {
   id: string;
   name: string;
-  bio?: string;
-  profilePic?: string;
+  bio: string | null;
+  profilePic: string | null;
+  songIds: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -31,16 +32,18 @@ export interface PageInfo {
   endCursor: string | null;
 }
 
-export interface ArtistEdge {
-  node: Artist;
+export interface Edge<T> {
+  node: T;
   cursor: string;
 }
 
-export interface ArtistConnection {
-  edges: ArtistEdge[];
+export interface Connection<T> {
+  edges: Edge<T>[];
   pageInfo: PageInfo;
   totalCount: number;
 }
+
+export type ArtistConnection = Connection<Artist>;
 
 export interface ArtistResponse {
   artists: ArtistConnection;
@@ -131,4 +134,12 @@ export interface Review {
 export interface ApiError {
   message: string;
   status: number;
+}
+
+export interface GetArtistsParams {
+  first?: number;
+  after?: string;
+  search?: string;
+  sortBy?: 'NAME';
+  sortDirection?: 'ASC' | 'DESC';
 }

@@ -24,7 +24,7 @@ export interface GetPlaylistsParams {
   };
 }
 
-export async function getPlaylists({
+export async function fetchPlaylists({
   first = 10,
   after,
   filter,
@@ -65,7 +65,7 @@ export async function getPlaylists({
   return response.playlists;
 }
 
-export async function getPlaylist(id: string): Promise<Playlist> {
+export async function fetchPlaylist(id: string): Promise<Playlist> {
   const query = `
     query GetPlaylist($id: ID!) {
       playlist(id: $id) {

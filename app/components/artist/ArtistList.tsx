@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '../../redux/store';
-import { fetchArtists, selectArtists, selectArtistsState, setSearch } from '../../redux/slices/artistSlice';
+import { getArtists, selectArtists, selectArtistsState, setSearch } from '../../redux/slices/artistSlice';
 import { Box, Button, CircularProgress, TextField, Typography } from '@mui/material';
 import ArtistCard from './ArtistCard';
 
@@ -15,7 +15,7 @@ const ArtistList: React.FC = () => {
   useEffect(() => {
     const loadArtists = async () => {
       try {
-        await dispatch(fetchArtists({ first: 10 })).unwrap();
+        await dispatch(getArtists({ first: 10 })).unwrap();
       } catch (err) {
         console.error('Failed to load artists:', err);
       }
@@ -26,11 +26,11 @@ const ArtistList: React.FC = () => {
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSearch = event.target.value;
     dispatch(setSearch(newSearch));
-    dispatch(fetchArtists({ first: 10, search: newSearch }));
+    dispatch(getArtists({ first: 10, search: newSearch }));
   };
 
   const handleLoadMore = () => {
-    dispatch(fetchArtists({ 
+    dispatch(getArtists({ 
       first: 10, 
       after: endCursor ?? undefined,
       search

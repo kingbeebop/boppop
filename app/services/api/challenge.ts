@@ -13,7 +13,7 @@ const CHALLENGE_FIELDS = `
   updatedAt
 `;
 
-export async function getChallenge(): Promise<Playlist> {
+export async function fetchChallenge(): Promise<Playlist> {
   const query = `
     query GetChallenge {
       currentChallenge {
@@ -26,7 +26,7 @@ export async function getChallenge(): Promise<Playlist> {
   return response.currentChallenge;
 }
 
-export async function getLastChallenge(): Promise<Playlist> {
+export async function fetchLastChallenge(): Promise<Playlist> {
   const query = `
     query GetLastChallenge {
       lastChallenge {

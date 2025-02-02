@@ -14,7 +14,7 @@ from sqlalchemy.orm import selectinload
 from fastapi.security import OAuth2PasswordRequestForm, HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.exc import IntegrityError
 import re
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
 
 from db.session import get_session
 from models.user import User
@@ -129,6 +129,9 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
         user_dict["username"] = user_create.username
         user_dict["hashed_password"] = self.password_helper.hash(user_dict.pop("password"))
 
+        # Get current time for timestamps
+        now = datetime.now(timezone.utc)
+
         async with self.user_db.session as session:
             try:
                 user = User(**user_dict)
@@ -137,7 +140,9 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
 
                 artist = Artist(
                     name=user_create.username,
-                    user_id=user.id
+                    user_id=user.id,
+                    created_at=now,
+                    updated_at=now
                 )
                 session.add(artist)
                 

@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { RootState } from '../store';
-import { getPlaylists, GetPlaylistsParams, getPlaylist } from '../../services/api';
+import { fetchPlaylist, fetchPlaylists, GetPlaylistsParams } from '../../services/api';
 import { Playlist } from '../../types';
 
 interface PlaylistState {
@@ -29,17 +29,34 @@ const initialState: PlaylistState = {
   totalCount: 0,
 };
 
-export const fetchPlaylists = createAsyncThunk(
-  'playlists/fetchPlaylists',
+export const getPlaylists = createAsyncThunk(
+  'playlists/getPlaylists',
   async (params: GetPlaylistsParams) => {
-    return await getPlaylists(params);
+    return await fetchPlaylists(params);
   }
 );
 
-export const fetchPlaylist = createAsyncThunk(
-  'playlists/fetchPlaylist',
+export const getPlaylist = createAsyncThunk(
+  'playlists/getPlaylist',
   async (id: string) => {
-    return await getPlaylist(id);
+    return await fetchPlaylist(id);
+  }
+);
+
+// Single playlist fetch
+export const getPlaylistById = createAsyncThunk(
+  'playlists/getPlaylistById',
+  async (id: string, { getState }) => {
+    // First check the cache
+    const state = getState() as RootState;
+    const cachedPlaylist = state.playlists.byId[id];
+    if (cachedPlaylist) {
+      return cachedPlaylist;
+    }
+
+    // If not in cache, fetch from API
+    const playlist = await fetchPlaylist(id);
+    return playlist;
   }
 );
 
@@ -53,11 +70,11 @@ const playlistSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchPlaylists.pending, (state) => {
+      .addCase(getPlaylists.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchPlaylists.fulfilled, (state, action) => {
+      .addCase(getPlaylists.fulfilled, (state, action) => {
         if (!action.payload) {
           state.error = 'Invalid response format';
           state.loading = false;
@@ -85,11 +102,19 @@ const playlistSlice = createSlice({
         state.endCursor = pageInfo.endCursor;
         state.totalCount = totalCount;
       })
-      .addCase(fetchPlaylists.rejected, (state, action) => {
+      .addCase(getPlaylists.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch playlists';
       })
-      .addCase(fetchPlaylist.fulfilled, (state, action) => {
+      .addCase(getPlaylist.fulfilled, (state, action) => {
+        if (action.payload) {
+          state.byId[action.payload.id] = action.payload;
+          if (!state.allIds.includes(action.payload.id)) {
+            state.allIds.push(action.payload.id);
+          }
+        }
+      })
+      .addCase(getPlaylistById.fulfilled, (state, action) => {
         if (action.payload) {
           state.byId[action.payload.id] = action.payload;
           if (!state.allIds.includes(action.payload.id)) {

@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
 import { 
-  fetchChallenge, 
+  getChallenge, 
   selectChallenge
 } from '../redux/slices/challengeSlice';
 import { addSong } from '../redux/slices/songSlice';
@@ -35,7 +35,7 @@ const Challenge: React.FC = () => {
 
   useEffect(() => {
     console.log('Challenge useEffect triggered');
-    dispatch(fetchChallenge());
+    dispatch(getChallenge());
   }, [dispatch]);
 
   // Add song to songs slice when currentSubmission changes
