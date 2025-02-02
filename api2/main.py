@@ -1,15 +1,26 @@
 from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from core.config import settings
 from core.users import auth_backend, fastapi_users
 from schemas.auth import UserRead, UserCreate, UserUpdate
 from core.health import check_db_health
 from core.events import *  # This will register our event listeners
-from strawberry.fastapi import GraphQLRouter
-from schemas.graphql import schema
-from graph.context import get_graphql_context
+from schemas.graphql import graphql_app
+from db.session import engine
 
-app = FastAPI(title=settings.PROJECT_NAME)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    yield
+    # Shutdown
+    await engine.dispose()
+
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    version=settings.VERSION,
+    lifespan=lifespan
+)
 
 # CORS configuration
 app.add_middleware(
@@ -18,7 +29,6 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["X-New-Token"],  # Allow frontend to see new token header
 )
 
 # Health check endpoint
@@ -61,19 +71,5 @@ app.include_router(
     tags=["users"]
 )
 
-# Create GraphQL endpoint with context
-graphql_app = GraphQLRouter(
-    schema,
-    context_getter=get_graphql_context,
-    graphiql=True
-)
-
-@app.middleware("http")
-async def cleanup_context(request: Request, call_next):
-    """Cleanup any resources after the request is complete."""
-    response = await call_next(request)
-    if hasattr(request.state, "context"):
-        await request.state.context.close()
-    return response
-
+# Mount GraphQL app
 app.include_router(graphql_app, prefix="/api/graphql")

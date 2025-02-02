@@ -1,19 +1,30 @@
-from typing import Generic, TypeVar, List, Optional
 import strawberry
-
-T = TypeVar("T")
+from typing import Optional, TypeVar, Generic, List
 
 @strawberry.type
 class PageInfo:
-    has_next_page: bool
-    has_previous_page: bool
-    start_cursor: Optional[str] = None
-    end_cursor: Optional[str] = None
-    total_pages: int
-    total_items: int
-    current_page: int
-    items_per_page: int
+    """Information about pagination in a connection."""
+    hasNextPage: bool
+    hasPreviousPage: bool
+    startCursor: Optional[str]
+    endCursor: Optional[str]
 
+T = TypeVar('T')
+
+@strawberry.type
+class Edge(Generic[T]):
+    """An edge in a connection."""
+    node: T
+    cursor: str
+
+@strawberry.type
+class Connection(Generic[T]):
+    """A connection of items."""
+    edges: List[Edge[T]]
+    pageInfo: PageInfo
+    totalCount: int
+
+# Legacy support for old pagination style
 @strawberry.type
 class PaginatedResponse(Generic[T]):
     items: List[T]

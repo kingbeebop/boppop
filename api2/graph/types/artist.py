@@ -1,53 +1,50 @@
-from typing import Optional, List, Annotated
+import strawberry
+from typing import Optional, List
 from datetime import datetime
 from enum import Enum
 from strawberry.types import Info
 from strawberry import field
 from strawberry import type as strawberry_type
 from strawberry.scalars import ID
-import strawberry
 from sqlalchemy import select, or_, func
 from db.session import AsyncSessionLocal
 from models.artist import Artist as ArtistModel
+from .pagination import Connection, Edge, PageInfo
 
+@strawberry.enum
 class SortDirection(Enum):
-    ASC = "asc"
-    DESC = "desc"
+    ASC = "ASC"
+    DESC = "DESC"
 
 @strawberry.enum
 class ArtistSortField(Enum):
-    NAME = "name"
-    CREATED_AT = "created_at"
+    NAME = "NAME"
+    CREATED_AT = "CREATED_AT"
 
 @strawberry.type
-class PageInfo:
-    total_items: int
-    total_pages: int
-    current_page: int
-    has_next: bool
-    has_prev: bool
-
-@strawberry_type
 class Artist:
     """Represents an artist profile."""
     id: ID
     name: str
     bio: Optional[str] = None
     profile_pic: Optional[str] = strawberry.field(name="profilePic")
+    user_id: ID = strawberry.field(name="userId")
+    song_ids: List[ID] = strawberry.field(name="songIds")
     created_at: datetime = strawberry.field(name="createdAt")
     updated_at: datetime = strawberry.field(name="updatedAt")
-    song_ids: List[ID] = strawberry.field(name="songIds")
 
     @classmethod
-    def from_db(cls, artist: ArtistModel) -> "Artist":
+    def from_db(cls, db_artist: ArtistModel) -> "Artist":
+        """Convert database model to GraphQL type."""
         return cls(
-            id=str(artist.id),
-            name=artist.name,
-            bio=artist.bio,
-            profile_pic=artist.profile_pic,
-            created_at=artist.created_at,
-            updated_at=artist.updated_at,
-            song_ids=[str(song.id) for song in artist.songs] if artist.songs else []
+            id=ID(str(db_artist.id)),
+            name=db_artist.name,
+            bio=db_artist.bio,
+            profile_pic=db_artist.profile_pic,
+            user_id=ID(str(db_artist.user_id)),
+            song_ids=[ID(str(song.id)) for song in db_artist.songs],
+            created_at=db_artist.created_at,
+            updated_at=db_artist.updated_at
         )
 
     # from .song import Song
@@ -80,16 +77,15 @@ class ArtistUpdateInput:
     bio: Optional[str] = None
     profile_pic: Optional[str] = None
 
-@strawberry_type
-class ArtistConnection:
-    items: List[Artist]
-    page_info: PageInfo
+# Use the generic types
+ArtistEdge = Edge[Artist]
+ArtistConnection = Connection[Artist]
 
-@strawberry_type
+@strawberry.input
 class ArtistFilter:
-    search: Optional[str] = strawberry.field(default=None)
-    sort_by: Optional[ArtistSortField] = strawberry.field(default=ArtistSortField.NAME)
-    sort_direction: Optional[SortDirection] = strawberry.field(default=SortDirection.ASC)
+    search: Optional[str] = None
+    sort_by: Optional[ArtistSortField] = None
+    sort_direction: Optional[SortDirection] = None
 
 @strawberry.type
 class Query:
@@ -157,3 +153,24 @@ class Query:
                 return None
 
             return Artist.from_db(artist)
+
+@strawberry.type
+class ArtistEdge:
+    """An edge in the artist connection."""
+    node: Artist
+    cursor: str
+
+@strawberry.type
+class ArtistConnection:
+    """A connection of artists."""
+    edges: List[ArtistEdge]
+    pageInfo: PageInfo
+    totalCount: int
+
+@strawberry.type
+class PageInfo:
+    """Information about pagination."""
+    hasNextPage: bool
+    hasPreviousPage: bool
+    startCursor: Optional[str]
+    endCursor: Optional[str]

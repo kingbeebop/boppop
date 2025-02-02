@@ -1,94 +1,29 @@
-from typing import Optional, Any
-from dataclasses import dataclass
-from fastapi import Request, Depends, Response
-from sqlalchemy.ext.asyncio import AsyncSession
-from models.user import User
-from models.artist import Artist
-from db.session import get_session
-from core.auth import optional_user_with_artist, auth_backend, AccessTokenStrategy
+from typing import Optional
+from fastapi import Request
 from strawberry.fastapi import BaseContext
+from sqlalchemy.ext.asyncio import AsyncSession
+from db.session import async_session_maker
 
-@dataclass
 class GraphQLContext(BaseContext):
-    """GraphQL context with auth and database access."""
-    request: Request
-    session: AsyncSession
-    response: Response
-    user: Optional[User] = None
-    artist: Optional[Artist] = None
+    def __init__(self, request: Request):
+        super().__init__()
+        self.request = request
+        self._session: Optional[AsyncSession] = None
 
-    @property
-    def is_authenticated(self) -> bool:
-        """Check if user is authenticated."""
-        return bool(self.user and self.user.is_active)
+    async def get_session(self) -> AsyncSession:
+        """Get the database session for this context."""
+        if self._session is None:
+            self._session = async_session_maker()
+        return self._session
 
-    def get(self, key: str, default: Any = None) -> Any:
-        """Compatibility method for older code that uses dict-style access."""
-        return getattr(self, key, default)
+    async def close(self):
+        """Clean up resources."""
+        if self._session is not None:
+            await self._session.close()
+            self._session = None
 
-    async def load_user(self) -> None:
-        """Load user from auth token."""
-        auth_header = self.request.headers.get("Authorization")
-        if not auth_header or not auth_header.startswith("Bearer "):
-            return
+def get_context(request: Request) -> GraphQLContext:
+    """Create a new GraphQL context for each request."""
+    return GraphQLContext(request)
 
-        token = auth_header.replace("Bearer ", "")
-        user_id = verify_token(token)
-        if user_id:
-            self.user = await self.session.get(User, user_id)
-            if self.user:
-                self.artist = self.user.artist
-
-    async def close(self) -> None:
-        """Close the database session."""
-        if self.session:
-            await self.session.close()
-
-    async def refresh_token_if_needed(self) -> Optional[str]:
-        """Try to refresh the access token if it's expired."""
-        auth_header = self.request.headers.get("Authorization")
-        if not auth_header or not auth_header.startswith("Bearer "):
-            return None
-
-        token = auth_header.replace("Bearer ", "")
-        try:
-            strategy = AccessTokenStrategy()
-            user_id = await strategy.read_token(token)
-            if user_id:
-                return None  # Token is still valid
-        except Exception:
-            refresh_token = self.request.cookies.get("refresh_token")
-            if refresh_token:
-                try:
-                    new_token = await refresh_token(refresh_token)
-                    return new_token["access_token"]
-                except Exception:
-                    return None
-        return None
-
-    async def handle_token_refresh(self) -> None:
-        """Handle token refresh if needed."""
-        new_token = await self.refresh_token_if_needed()
-        if new_token:
-            self.response.headers["X-New-Token"] = new_token
-
-async def get_graphql_context(
-    request: Request,
-    session: AsyncSession = Depends(get_session),
-    user: Optional[User] = Depends(optional_user_with_artist)
-) -> GraphQLContext:
-    """Create GraphQL context using FastAPI's dependency injection."""
-    context = GraphQLContext(
-        request=request,
-        session=session,
-        response=Response(),
-        user=user,
-        artist=user.artist if user else None
-    )
-    
-    # Try to refresh token if needed
-    new_token = await context.refresh_token_if_needed()
-    if new_token:
-        context.response.headers["X-New-Token"] = new_token
-    
-    return context
+__all__ = ["GraphQLContext", "get_context"]

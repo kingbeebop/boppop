@@ -23,6 +23,7 @@ from schemas.auth import UserCreate, UserUpdate
 from core.config import settings
 from core.security import create_access_token
 from fastapi_users.exceptions import InvalidPasswordException, UserAlreadyExists
+from .auth import get_user_manager
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -374,3 +375,18 @@ async def login(
     }
     
     return response
+
+# JWT Strategy
+def get_jwt_strategy() -> JWTStrategy:
+    return JWTStrategy(
+        secret=settings.JWT_SECRET,
+        lifetime_seconds=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    )
+
+__all__ = [
+    "router",
+    "auth_backend",
+    "fastapi_users",
+    "current_active_user",
+    "current_superuser"
+]

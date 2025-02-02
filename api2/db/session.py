@@ -1,44 +1,44 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession, AsyncEngine
 from core.config import settings
+from typing import AsyncGenerator
 
 # Create async engine
-engine = create_async_engine(
+engine: AsyncEngine = create_async_engine(
     settings.SQLALCHEMY_DATABASE_URL,
     echo=settings.DB_ECHO,
-    pool_size=20,
-    max_overflow=10,
-    pool_pre_ping=True,
+    future=True,
+    pool_pre_ping=True
 )
 
-# Create session maker
+# Create session factory
 async_session_maker = async_sessionmaker(
     engine,
     class_=AsyncSession,
     expire_on_commit=False,
+    autocommit=False,
     autoflush=False
 )
 
-# Create base class for declarative models
-Base = declarative_base()
+# Backwards compatibility for existing code
+AsyncSessionLocal = async_session_maker
 
-# For dependency injection
-async def get_session() -> AsyncSession:
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    """Get a database session."""
     async with async_session_maker() as session:
         try:
             yield session
         finally:
             await session.close()
 
-# Backwards compatibility
+# Aliases for FastAPI dependency injection
+get_async_session = get_session
 get_db = get_session
-AsyncSessionLocal = async_session_maker
 
 __all__ = [
-    "Base",
     "engine",
-    "get_db",
+    "async_session_maker",
+    "AsyncSessionLocal",  # Added back for compatibility
     "get_session",
-    "AsyncSessionLocal",
-    "async_session_maker"
+    "get_async_session",
+    "get_db"
 ] 

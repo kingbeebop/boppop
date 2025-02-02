@@ -8,6 +8,9 @@ from typing import Optional
 from datetime import datetime
 import logging
 import jwt
+from fastapi import Request
+from fastapi_users import BaseUserManager, IntegerIDMixin
+from fastapi_users.db import SQLAlchemyUserDatabase
 
 from .config import settings
 from models.user import User
@@ -132,4 +135,29 @@ async def refresh_token(
             "token_type": "bearer"
         }
     except Exception:
-        raise HTTPException(status_code=401, detail="Invalid refresh token") 
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
+    reset_password_token_secret = settings.JWT_SECRET
+    verification_token_secret = settings.JWT_SECRET
+
+    async def on_after_register(self, user: User, request: Optional[Request] = None):
+        print(f"User {user.id} has registered.")
+
+    async def on_after_forgot_password(
+        self, user: User, token: str, request: Optional[Request] = None
+    ):
+        print(f"User {user.id} has forgot their password. Reset token: {token}")
+
+    async def on_after_request_verify(
+        self, user: User, token: str, request: Optional[Request] = None
+    ):
+        print(f"Verification requested for user {user.id}. Verification token: {token}")
+
+async def get_user_db(session: AsyncSession = Depends(get_session)):
+    yield SQLAlchemyUserDatabase(session, User)
+
+async def get_user_manager(user_db=Depends(get_user_db)):
+    yield UserManager(user_db)
+
+__all__ = ["UserManager", "get_user_db", "get_user_manager"] 

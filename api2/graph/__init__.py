@@ -1,11 +1,13 @@
 from .types import (
     Artist,
+    ArtistConnection,
+    ArtistFilter,
     Song,
     Playlist,
     Review,
     Vote,
-    PaginatedResponse,
-    PageInfo
+    PageInfo,
+    PaginatedResponse
 )
 
 from .inputs import (
@@ -23,17 +25,19 @@ from .inputs import (
 )
 
 from .schema import schema
-from .context import GraphQLContext, get_graphql_context
+from .context import GraphQLContext, get_context
 
 __all__ = [
     # Types
     "Artist",
+    "ArtistConnection",
+    "ArtistFilter",
     "Song",
     "Playlist",
     "Review",
     "Vote",
-    "PaginatedResponse",
     "PageInfo",
+    "PaginatedResponse",
     
     # Inputs
     "ArtistInput",
@@ -53,5 +57,5 @@ __all__ = [
     
     # Context
     "GraphQLContext",
-    "get_graphql_context"
+    "get_context"
 ]
