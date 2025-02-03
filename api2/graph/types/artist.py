@@ -174,3 +174,9 @@ class PageInfo:
     hasPreviousPage: bool
     startCursor: Optional[str]
     endCursor: Optional[str]
+
+@strawberry.type
+class ArtistRef:
+    """A simplified artist reference."""
+    id: ID
+    name: str

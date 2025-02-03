@@ -1,13 +1,13 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../store';
-import { fetchSong, fetchSongsByIds } from '../../services/api';
+import { fetchSong, fetchSongs } from '../../services/api';
 import { Song } from '../../types';
 
 interface SongState {
   byId: Record<string, Song>;
   allIds: string[];
   selectedSong: Song | null;
-  loading: boolean;
+  status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
 }
 
@@ -15,20 +15,41 @@ const initialState: SongState = {
   byId: {},
   allIds: [],
   selectedSong: null,
-  loading: false,
+  status: 'idle',
   error: null,
 };
 
-export const getSongsByIds = createAsyncThunk(
-  'songs/getSongsByIds',
-  async (ids: string[]) => {
-    return await fetchSongsByIds(ids);
+export const getSongs = createAsyncThunk(
+  'songs/getSongs',
+  async (songIds: string[], { getState }) => {
+    const state = getState() as RootState;
+    
+    // Filter out IDs we already have in cache
+    const missingIds = songIds.filter(id => !state.songs.byId[id]);
+    
+    if (missingIds.length === 0) {
+      console.log('All songs already in cache');
+      return [];
+    }
+
+    console.log('Fetching missing songs:', missingIds);
+    const songs = await fetchSongs(missingIds);
+    return songs;
   }
 );
 
 export const getSong = createAsyncThunk(
   'songs/getSong',
-  async (id: string) => {
+  async (id: string, { getState }) => {
+    const state = getState() as RootState;
+    
+    // Check if we already have this song in cache
+    if (state.songs.byId[id]) {
+      console.log('Song already in cache:', id);
+      return null;
+    }
+
+    console.log('Fetching song:', id);
     return await fetchSong(id);
   }
 );
@@ -69,28 +90,43 @@ const songSlice = createSlice({
       state.byId = {};
       state.allIds = [];
       state.selectedSong = null;
-      state.loading = false;
+      state.status = 'idle';
       state.error = null;
     }
   },
   extraReducers: (builder) => {
     builder
-      .addCase(getSongsByIds.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+      .addCase(getSongs.pending, (state) => {
+        state.status = 'loading';
       })
-      .addCase(getSongsByIds.fulfilled, (state, action) => {
-        state.loading = false;
-        action.payload.forEach(song => {
+      .addCase(getSongs.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        // Add new songs to cache without removing existing ones
+        action.payload.forEach((song: Song) => {
           state.byId[song.id] = song;
-          if (!state.allIds.includes(song.id)) {
-            state.allIds.push(song.id);
-          }
         });
       })
-      .addCase(getSongsByIds.rejected, (state, action) => {
-        state.loading = false;
+      .addCase(getSongs.rejected, (state, action) => {
+        state.status = 'failed';
         state.error = action.error.message || 'Failed to fetch songs';
+      })
+      // Add cases for getSong
+      .addCase(getSong.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(getSong.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        // Only update if we got a new song (not null from cache)
+        if (action.payload) {
+          state.byId[action.payload.id] = action.payload;
+          if (!state.allIds.includes(action.payload.id)) {
+            state.allIds.push(action.payload.id);
+          }
+        }
+      })
+      .addCase(getSong.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.error.message || 'Failed to fetch song';
       });
   },
 });
@@ -107,8 +143,10 @@ export const {
 export const selectSongs = (state: RootState) => 
   state.songs.allIds.map(id => state.songs.byId[id]);
 
-export const selectSongById = (id: string) => (state: RootState) => 
-  state.songs.byId[id];
+export const selectSongById = (state: RootState, id: string) => state.songs.byId[id];
+
+export const selectSongsByIds = (state: RootState, ids: string[]) => 
+  ids.map(id => state.songs.byId[id]).filter(Boolean);
 
 export const selectSongsState = (state: RootState) => state.songs;
 

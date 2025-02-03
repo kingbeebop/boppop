@@ -1,64 +1,67 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../../redux/store';
-import { setSelectedSong } from '../../redux/slices/songSlice';
-import { ListItemButton, ListItemText, ListItemIcon } from '@mui/material';
-import MusicNoteIcon from '@mui/icons-material/MusicNote';
+import { AppDispatch, RootState } from '../../redux/store';
+import { getSong } from '../../redux/slices/songSlice';
+import { 
+  Card, 
+  CardContent, 
+  Typography, 
+  Link, 
+  Box,
+  Skeleton
+} from '@mui/material';
 
 interface SongCardProps {
   songId: string;
 }
 
 const SongCard: React.FC<SongCardProps> = ({ songId }) => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const song = useSelector((state: RootState) => state.songs.byId[songId]);
-  const selectedSong = useSelector((state: RootState) => state.songs.selectedSong);
-  const [isSelected, setIsSelected] = useState(false);
+  const status = useSelector((state: RootState) => state.songs.status);
 
   useEffect(() => {
-    console.log("CARD: ",songId);
-  }, [songId]);
+    dispatch(getSong(songId));
+  }, [dispatch, songId]);
 
-  useEffect(() => {
-    console.log("Song: ",song);
-  }, [song]);
+  if (status === 'loading' && !song) {
+    return (
+      <Card>
+        <CardContent>
+          <Skeleton variant="text" width="60%" height={32} />
+          <Skeleton variant="text" width="40%" height={24} />
+        </CardContent>
+      </Card>
+    );
+  }
 
-  useEffect(() => {
-    setIsSelected(selectedSong?.id === songId);
-  }, [selectedSong, songId]);
-
-  const handleClick = () => {
-    dispatch(setSelectedSong(songId));
-  };
-
-  if (!song) return null;
+  if (!song) {
+    return null;
+  }
 
   return (
-    <ListItemButton
-      onClick={handleClick}
-      selected={isSelected}
-      sx={{
-        borderRadius: 1,
-        mb: 1,
-        '&.Mui-selected': {
-          backgroundColor: 'primary.main',
-          '&:hover': {
-            backgroundColor: 'primary.dark',
-          },
-        },
-      }}
-    >
-      <ListItemIcon>
-        <MusicNoteIcon color={isSelected ? 'primary' : 'inherit'} />
-      </ListItemIcon>
-      <ListItemText
-        primary={song.title}
-        secondary={song.artistName}
-        primaryTypographyProps={{
-          fontWeight: isSelected ? 600 : 400,
-        }}
-      />
-    </ListItemButton>
+    <Card>
+      <CardContent>
+        <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+          <Box>
+            <Typography variant="h6" component="h2">
+              {song.title}
+            </Typography>
+            <Typography color="text.secondary">
+              {song.artist.name}
+            </Typography>
+          </Box>
+          <Link 
+            href={song.url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            sx={{ ml: 2 }}
+          >
+            Listen
+          </Link>
+        </Box>
+      </CardContent>
+    </Card>
   );
 };
 

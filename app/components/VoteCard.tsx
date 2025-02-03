@@ -1,51 +1,58 @@
-import React, { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React from 'react';
+import { useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
-import { setBallot } from '../redux/slices/contestSlice';
+import { 
+  Card, 
+  CardContent, 
+  Typography, 
+  Link, 
+  Box,
+  Radio,
+  FormControlLabel
+} from '@mui/material';
 
-interface VoteCardProps {
-  songId: string;
-  playlistId: string;
-}
-
-const VoteCard: React.FC<VoteCardProps> = ({ songId, playlistId }) => {
-  const dispatch = useDispatch();
+const VoteCard: React.FC<{ songId: string }> = ({ songId }) => {
   const song = useSelector((state: RootState) => state.songs.byId[songId]);
-  const artist = useSelector((state: RootState) => 
-    song ? state.artists.byId[song.artistId] : null
+  const artist = useSelector((state: RootState) =>
+    song ? state.artists.byId[song.artist.id] : null
   );
   const ballot = useSelector((state: RootState) => state.contest.ballot);
-  const [isHovered, setIsHovered] = useState(false);
 
-  const handleClick = () => {
-    dispatch(setBallot({ 
-      songId,
-      playlistId,
-      comments: ballot?.comments || ''
-    }));
-  };
-
-  const handleMouseEnter = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-  };
-
-  if (!song || !artist) return null;
+  if (!song) {
+    return null;
+  }
 
   return (
-    <div
-      className={`p-3 border rounded cursor-pointer ${ballot?.songId === songId ? 'bg-green-500' : ''}`}
-      onClick={handleClick}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <div className={`${isHovered ? 'ml-4 transition-all duration-500' : ''}`}>
-        <strong>{song.title}</strong> by {artist.name}
-      </div>
-    </div>
+    <Card>
+      <CardContent>
+        <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+          <Box flex={1}>
+            <Typography variant="h6" component="h2">
+              {song.title}
+            </Typography>
+            <Typography color="text.secondary">
+              {song.artist.name}
+            </Typography>
+          </Box>
+          <Box display="flex" alignItems="center">
+            <Link 
+              href={song.url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              sx={{ mr: 2 }}
+            >
+              Listen
+            </Link>
+            <FormControlLabel
+              value={songId}
+              control={<Radio />}
+              label=""
+              checked={ballot?.songId === songId}
+            />
+          </Box>
+        </Box>
+      </CardContent>
+    </Card>
   );
 };
 

@@ -1,4 +1,3 @@
-import React from 'react';
 import { 
   Box, 
   Typography, 
@@ -9,40 +8,18 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../../redux/store';
 import { setBallot, submitBallot } from '../../redux/slices/contestSlice';
 import SongVoteCard from './SongVoteCard';
-import { useRouter } from 'next/router';
+import { selectChallenge } from '@/redux/slices/challengeSlice';
 
-interface VotingInterfaceProps {
-  playlistId: string;
-}
-
-const VotingInterface: React.FC<VotingInterfaceProps> = ({ playlistId }) => {
-  const router = useRouter();
+const VotingInterface = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const playlist = useSelector((state: RootState) => state.playlists.byId[playlistId]);
+  const challenge = useSelector(selectChallenge);
   const ballot = useSelector((state: RootState) => state.contest.ballot);
-
-  if (!playlist) {
-    return (
-      <Box sx={{ textAlign: 'center', py: 4 }}>
-        <Typography variant="h5">
-          Voting hasn&apos;t begun yet
-        </Typography>
-        <Button 
-          variant="contained" 
-          onClick={() => router.push('/challenge')}
-          sx={{ mt: 3 }}
-        >
-          Submit a Song
-        </Button>
-      </Box>
-    );
-  }
 
   const handleVote = (songId: string) => {
     dispatch(setBallot({
       ...ballot,
       songId,
-      playlistId
+      playlistId: challenge.playlist_id ?? ''
     }));
   };
 
@@ -53,13 +30,23 @@ const VotingInterface: React.FC<VotingInterfaceProps> = ({ playlistId }) => {
     }));
   };
 
+  if (!challenge.contest) {
+    return (
+      <Box sx={{ textAlign: 'center', py: 4 }}>
+        <Typography variant="h5">
+          No active contest found
+        </Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
       <Typography variant="h4" gutterBottom>
-        Vote for Your Favorite
+        {challenge.theme}
       </Typography>
       
-      {playlist.songIds.map(songId => (
+      {challenge.songIds.map(songId => (
         <SongVoteCard
           key={songId}
           songId={songId}
@@ -73,7 +60,7 @@ const VotingInterface: React.FC<VotingInterfaceProps> = ({ playlistId }) => {
           fullWidth
           multiline
           rows={4}
-          label="Your comments on this playlist"
+          label="Your comments on this contest"
           value={ballot?.comments || ''}
           onChange={(e) => handleCommentChange(e.target.value)}
         />

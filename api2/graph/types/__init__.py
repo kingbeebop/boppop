@@ -1,50 +1,59 @@
 from .artist import (
-    Artist,
-    ArtistConnection,
+    Artist, 
+    ArtistConnection, 
+    ArtistFilter, 
     ArtistEdge,
-    ArtistFilter,
     ArtistSortField,
     SortDirection,
+    ArtistRef
+)
+from .song import (
+    Song, 
+    SongConnection, 
+    SongFilter, 
+    SongEdge,
+    SongSortField
 )
 from .playlist import (
-    Playlist,
-    PlaylistConnection,
-    PlaylistEdge,
+    Playlist, 
+    PlaylistConnection, 
     PlaylistFilter,
+    PlaylistEdge
 )
-from .song import Song
+from .pagination import Connection, Edge, PageInfo, PaginatedResponse
 from .review import Review
 from .vote import Vote
-from .pagination import (
-    PageInfo,
-    Connection,
-    Edge,
-    PaginatedResponse
-)
 
 __all__ = [
     # Artist types
-    "Artist",
-    "ArtistConnection",
-    "ArtistEdge",
-    "ArtistFilter",
-    "ArtistSortField",
-    "SortDirection",
+    'Artist',
+    'ArtistConnection',
+    'ArtistFilter',
+    'ArtistEdge',
+    'ArtistSortField',
+    'SortDirection',
+    'ArtistRef',
+    
+    # Song types
+    'Song',
+    'SongConnection',
+    'SongFilter',
+    'SongEdge',
+    'SongSortField',
     
     # Playlist types
-    "Playlist",
-    "PlaylistConnection",
-    "PlaylistEdge",
-    "PlaylistFilter",
+    'Playlist',
+    'PlaylistConnection',
+    'PlaylistFilter',
+    'PlaylistEdge',
     
     # Other types
-    "Song",
-    "Review",
-    "Vote",
+    'Review',
+    'Vote',
     
     # Pagination types
-    "PageInfo",
-    "Connection",
-    "Edge",
-    "PaginatedResponse"
+    'Connection',
+    'Edge',
+    'PageInfo',
+    'PaginatedResponse'
 ]

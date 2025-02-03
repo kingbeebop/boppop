@@ -5,30 +5,28 @@ const SONG_FIELDS = `
   id
   title
   url
-  artistId
-  artistName
+  artist {
+    id
+    name
+  }
 `;
 
-export async function fetchSongsByIds(ids: string[]): Promise<Song[]> {
+export async function fetchSongs(ids: string[]): Promise<Song[]> {
   const query = `
-    query GetSongs($ids: [ID!]!) {
-      songsByIds(ids: $ids) {
+    query GetSongsByIds($ids: [String!]!) {
+      songs_by_ids(ids: $ids) {
         ${SONG_FIELDS}
       }
     }
   `;
 
-  const response = await graphqlRequest<{ songsByIds: Song[] }>(
-    query,
-    { ids },
-    true
-  );
-  return response.songsByIds;
+  const response = await graphqlRequest<{ songs_by_ids: Song[] }>(query, { ids });
+  return response.songs_by_ids;
 }
 
 export async function fetchSong(id: string): Promise<Song> {
   const query = `
-    query GetSong($id: ID!) {
+    query GetSong($id: String!) {
       song(id: $id) {
         ${SONG_FIELDS}
       }
@@ -38,108 +36,56 @@ export async function fetchSong(id: string): Promise<Song> {
   const response = await graphqlRequest<{ song: Song }>(query, { id });
   return response.song;
 }
-// import { graphqlRequest } from '../fetch';
-// import { Song } from '../../types';
 
-// const SONG_FIELDS = `
-//   id
-//   title
-//   url
-//   artist {
-//     id
-//     username
-//     name
-//   }
-//   playlist {
-//     id
-//     number
-//     theme
-//   }
-//   created_at
-//   updated_at
-// `;
+interface SongsFilter {
+  artistId?: string;
+  search?: string;
+  sortBy?: string;
+  sortDirection?: 'ASC' | 'DESC';
+}
 
-// interface SongResponse {
-//     items: Song[];
-//     totalItems: number;
-//     totalPages: number;
-//     currentPage: number;
-//     hasNext: boolean;
-//     hasPrev: boolean;
-//   }
+interface PageInfo {
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  startCursor: string;
+  endCursor: string;
+}
 
-// interface GetSongsParams {
-//   page?: number;
-//   limit?: number;
-//   sortBy?: 'title' | 'created_at';
-//   sortDirection?: 'asc' | 'desc';
-//   artistId?: number;
-//   playlistId?: number;
-//   search?: string;
-// }
+interface SongsConnection {
+  edges: {
+    node: Song;
+    cursor: string;
+  }[];
+  pageInfo: PageInfo;
+}
 
-// export async function getSong(id: number): Promise<Song> {
-//   const query = `
-//     query GetSong($id: ID!) {
-//       song(id: $id) {
-//         ${SONG_FIELDS}
-//       }
-//     }
-//   `;
-//   return (await graphqlRequest<{ song: Song }>(query, { id })).song;
-// }
+export async function getSongs(
+  first: number = 10,
+  after?: string,
+  filter?: SongsFilter
+): Promise<SongsConnection> {
+  const query = `
+    query GetSongs($first: Int!, $after: String, $filter: SongFilter) {
+      songs(first: $first, after: $after, filter: $filter) {
+        edges {
+          node {
+            ${SONG_FIELDS}
+          }
+          cursor
+        }
+        pageInfo {
+          hasNextPage
+          hasPreviousPage
+          startCursor
+          endCursor
+        }
+      }
+    }
+  `;
 
-// export async function getSongs({
-//   page = 1,
-//   limit = 10,
-//   search = '',
-//   artistId,
-//   playlistId
-// }: GetSongsParams): Promise<SongResponse> {
-//   const query = `
-//     query GetSongs($page: Int!, $limit: Int!, $search: String, $artistId: ID, $playlistId: ID) {
-//       songs(
-//         page: $page
-//         limit: $limit
-//         search: $search
-//         artistId: $artistId
-//         playlistId: $playlistId
-//       ) {
-//         items {
-//           ${SONG_FIELDS}
-//         }
-//         pageInfo {
-//           totalItems
-//           totalPages
-//           currentPage
-//         }
-//       }
-//     }
-//   `;
-
-//   const response = await graphqlRequest<{
-//     songs: {
-//       items: Song[];
-//       pageInfo: {
-//         totalItems: number;
-//         totalPages: number;
-//         currentPage: number;
-//       };
-//     };
-//   }>(query, {
-//     page,
-//     limit,
-//     search,
-//     artistId,
-//     playlistId,
-//   });
-
-//   return {
-//     items: response.songs.items,
-//     totalItems: response.songs.pageInfo.totalItems,
-//     totalPages: response.songs.pageInfo.totalPages,
-//     currentPage: response.songs.pageInfo.currentPage,
-//     hasNext: response.songs.pageInfo.currentPage < response.songs.pageInfo.totalPages,
-//     hasPrev: response.songs.pageInfo.currentPage > 1
-//   };
-// }
+  const response = await graphqlRequest<{ songs: SongsConnection }>(
+    query,
+    { first, after, filter }
+  );
+  return response.songs;
+}

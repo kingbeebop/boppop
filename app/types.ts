@@ -2,8 +2,10 @@ export interface Song {
   id: string;
   title: string;
   url: string;
-  artistId: string;
-  artistName: string;
+  artist: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface Artist {

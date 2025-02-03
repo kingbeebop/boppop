@@ -12,8 +12,22 @@ const Contest: React.FC = () => {
   const challenge = useSelector(selectChallenge);
 
   useEffect(() => {
-    dispatch(getChallenge());
-  }, [dispatch]);
+    // Only fetch if we don't have data and aren't currently loading
+    if (!challenge.initialized && challenge.status === 'idle') {
+      console.log("Fetching challenge data");
+      dispatch(getChallenge());
+    }
+  }, [dispatch, challenge.initialized, challenge.status]);
+
+  if (challenge.status === 'loading') {
+    return (
+      <Box sx={{ textAlign: 'center', py: 4 }}>
+        <Typography variant="h5">
+          Loading contest...
+        </Typography>
+      </Box>
+    );
+  }
 
   if (!challenge.contest) {
     return (
@@ -32,7 +46,7 @@ const Contest: React.FC = () => {
     );
   }
 
-  return <VotingInterface playlistId={challenge.playlist_id ?? '0'} />;
+  return <VotingInterface />;
 };
 
 export default Contest;
