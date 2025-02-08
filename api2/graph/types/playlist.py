@@ -42,6 +42,25 @@ class PlaylistFilter:
     active: Optional[bool] = None
     contest: Optional[bool] = None
 
+@strawberry.type
+class PlaylistRef:
+    """A simplified playlist reference."""
+    id: ID
+    theme: str
+    active: bool
+    contest: bool
+
+    @classmethod
+    def from_db(cls, playlist_model):
+        if not playlist_model:
+            return None
+        return cls(
+            id=ID(str(playlist_model.id)),
+            theme=playlist_model.theme,
+            active=playlist_model.active,
+            contest=playlist_model.contest
+        )
+
 __all__ = [
     "Playlist",
     "PlaylistFilter",

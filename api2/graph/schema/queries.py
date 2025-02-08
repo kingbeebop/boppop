@@ -1,5 +1,5 @@
 import strawberry
-from typing import Optional
+from typing import Optional, List
 from ..types import (
     Artist, 
     ArtistConnection, 
@@ -12,9 +12,10 @@ from ..types import (
     Vote,
     PaginatedResponse
 )
+from ..types.song import SongConnection
 from ..resolvers.artist import get_artist, get_artists
 from ..resolvers.playlist import get_playlist, get_playlists, get_current_challenge
-from ..resolvers.song import get_song, get_songs
+from ..resolvers.song import song, get_songs
 from ..resolvers.review import get_review, get_reviews
 from ..resolvers.vote import get_vote, get_votes
 from strawberry.types import Info
@@ -62,8 +63,8 @@ class Query:
         return await get_playlists(first, after, filter, info)
 
     # Legacy queries using old pagination
-    song: Optional[Song] = strawberry.field(resolver=get_song)
-    songs: PaginatedResponse[Song] = strawberry.field(resolver=get_songs)
+    song: Optional[Song] = song
+    songs: SongConnection = get_songs
     review: Optional[Review] = strawberry.field(resolver=get_review)
     reviews: PaginatedResponse[Review] = strawberry.field(resolver=get_reviews)
     vote: Optional[Vote] = strawberry.field(resolver=get_vote)

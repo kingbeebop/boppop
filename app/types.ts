@@ -115,13 +115,11 @@ export interface SubmissionResponse {
 
 export interface Vote {
   songId: string;
-  playlistId: string;
   comments: string;
 }
 
 export interface Ballot {
   songId: string | null;
-  playlistId: string;
   comments: string;
 }
 

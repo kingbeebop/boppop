@@ -1,5 +1,7 @@
 import { baseFetch } from '../fetch';
 import { Login, AuthResponse, Registration, User } from '../../types';
+import store from '../../redux/store';
+import { setCredentials } from '../../redux/slices/authSlice';
 
 export async function loginUser(data: Login): Promise<AuthResponse> {
   const formData = new URLSearchParams();
@@ -144,3 +146,20 @@ export async function initializeAuth(): Promise<User | null> {
     return null;
   }
 }
+
+export const login = async (username: string, password: string) => {
+  const response = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ username, password }),
+  });
+
+  const data = await response.json();
+  if (response.ok) {
+    store.dispatch(setCredentials({ token: data.access_token }));
+    return data;
+  }
+  throw new Error(data.detail || 'Login failed');
+};

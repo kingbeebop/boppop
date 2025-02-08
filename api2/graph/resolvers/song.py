@@ -13,31 +13,26 @@ from ..types import (
     ArtistRef
 )
 from strawberry.types import Info
+from sqlalchemy.orm import joinedload, selectinload
+from db.session import AsyncSessionLocal
+import strawberry
 
-async def get_song(id: str, info: Info) -> Optional[Song]:
-    """Get a single song by ID."""
-    session = await info.context.get_session()
-    async with session.begin():
+@strawberry.field
+async def song(self, id: str, info: Info) -> Optional[Song]:
+    """Get a song by ID."""
+    async with AsyncSessionLocal() as session:
+        # Load song with artist in one query
         result = await session.execute(
-            select(SongModel, ArtistModel)
-            .join(ArtistModel, SongModel.artist_id == ArtistModel.id)
+            select(SongModel)
+            .options(joinedload(SongModel.artist))  # Just load the artist
             .where(SongModel.id == int(id))
         )
-        row = result.first()
-        if row:
-            song, artist = row
-            return Song(
-                id=str(song.id),
-                title=song.title,
-                url=song.url,
-                artist=ArtistRef(
-                    id=str(artist.id),
-                    name=artist.name
-                ),
-                created_at=song.created_at,
-                updated_at=song.updated_at
-            )
-        return None
+        song_model = result.unique().scalar_one_or_none()
+        
+        if not song_model:
+            return None
+
+        return Song.from_db(song_model)
 
 async def get_songs(
     first: int = 10,
@@ -144,3 +139,43 @@ async def get_songs_by_ids(ids: List[str], info: Info) -> List[Song]:
                 updated_at=song.updated_at
             ) for song, artist in rows
         ]
+
+@strawberry.field
+async def get_songs(
+    self,
+    info: Info,
+    first: int = 10,
+    after: Optional[str] = None
+) -> SongConnection:
+    """Get paginated songs."""
+    async with AsyncSessionLocal() as session:
+        query = (
+            select(SongModel)
+            .options(joinedload(SongModel.artist))
+            .order_by(SongModel.created_at.desc())
+        )
+
+        if after:
+            query = query.where(SongModel.id < int(after))
+
+        query = query.limit(first + 1)
+        result = await session.execute(query)
+        songs = result.unique().scalars().all()
+
+        has_next_page = len(songs) > first
+        if has_next_page:
+            songs = songs[:-1]
+
+        return SongConnection(
+            edges=[
+                SongEdge(
+                    node=Song.from_db(song),
+                    cursor=str(song.id)
+                )
+                for song in songs
+            ],
+            pageInfo=PageInfo(
+                hasNextPage=has_next_page,
+                endCursor=str(songs[-1].id) if songs else None
+            )
+        )

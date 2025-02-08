@@ -1,3 +1,6 @@
+import store from '../redux/store';
+import { selectCurrentToken } from '../redux/slices/authSlice';
+
 export async function baseFetch<T>(
   endpoint: string,
   options: RequestInit = {}
@@ -44,24 +47,35 @@ interface GraphQLResponse<T> {
   errors?: Array<{ message: string }>;
 }
 
-export async function graphqlRequest<T>(
+export const graphqlRequest = async <T>(
   query: string,
-  variables?: Record<string, any>,
-  isProtected = false
-): Promise<T> {
-  const response = await baseFetch<GraphQLResponse<T>>('/graphql', {
+  variables?: Record<string, unknown>,
+  requireAuth: boolean = false
+): Promise<T> => {
+  const token = selectCurrentToken(store.getState());
+  
+  // Check if this is a mutation and requires auth
+  const isMutation = query.trim().toLowerCase().startsWith('mutation');
+  if (isMutation && !token) {
+    throw new Error('Authentication required');
+  }
+
+  const response = await fetch('/api/graphql', {
     method: 'POST',
-    body: JSON.stringify({ query, variables }),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : '',
+    },
+    body: JSON.stringify({
+      query,
+      variables,
+    }),
   });
 
-  if (response.errors?.length) {
-    throw new Error(response.errors[0].message);
+  const json = await response.json();
+  if (json.errors) {
+    throw new Error(json.errors[0].message);
   }
-
-  if (!response.data) {
-    throw new Error('No data received from GraphQL');
-  }
-
-  return response.data;
-}
+  return json.data;
+};
 

@@ -30,7 +30,7 @@ export async function getContest(): Promise<Playlist> {
   return (await graphqlRequest<{ currentContest: Playlist }>(query, {}, true)).currentContest;
 }
 
-export async function submitBallot(ballot: Ballot): Promise<void> {
+export async function postBallot(ballot: Ballot): Promise<void> {
   const mutation = `
     mutation SubmitBallot($songId: ID!, $comments: String!) {
       submitBallot(input: {

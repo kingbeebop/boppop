@@ -63,5 +63,5 @@ export async function submitSong(data: Submission): Promise<void> {
     }
   `;
   
-  await graphqlRequest<{ submitSong: { id: string } }>(mutation, data, true);
+  await graphqlRequest<{ submitSong: { id: string } }>(mutation, { ...data }, true);
 } 

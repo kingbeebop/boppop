@@ -8,6 +8,7 @@ from core.health import check_db_health
 from core.events import *  # This will register our event listeners
 from schemas.graphql import graphql_app
 from db.session import engine
+from strawberry.fastapi import GraphQLRouter
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -71,5 +72,5 @@ app.include_router(
     tags=["users"]
 )
 
-# Mount GraphQL app
+# Mount GraphQL app - keep it simple
 app.include_router(graphql_app, prefix="/api/graphql")

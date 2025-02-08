@@ -1,5 +1,5 @@
 from .artist import get_artist, get_artists
-from .song import get_song, get_songs
+from .song import song, get_songs
 from .playlist import get_playlist, get_playlists
 from .review import get_review, get_reviews
 from .vote import get_vote, get_votes

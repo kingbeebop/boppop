@@ -4,12 +4,19 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/graphql';
 
 export const createGraphQLClient = () => {
   const token = localStorage.getItem('token');
+  console.log('Creating client with token:', token);
+  
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
   
   return new GraphQLClient(API_URL, {
     credentials: 'include',
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
+    headers,
   });
 };
 

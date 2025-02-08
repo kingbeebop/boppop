@@ -2,24 +2,25 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { loginUser, registerUser, logoutUser, getCurrentUser, initializeAuth } from '../../services/api/auth';
 import type { User, Login, Registration } from '../../types';
 import { fetchSubmissionData, clearSubmission } from './submissionSlice';
+import { RootState } from '../store';
 
 // Define and export the AuthState interface
 export interface AuthState {
   token: string | null;
+  isAuthenticated: boolean;
   user: User | null;
   loading: boolean;
   error: string | null;
-  isAuthenticated: boolean;
   showLoginModal: boolean;
   showRegisterModal: boolean;
 }
 
 const initialState: AuthState = {
   token: typeof window !== 'undefined' ? localStorage.getItem('token') : null,
+  isAuthenticated: typeof window !== 'undefined' ? !!localStorage.getItem('token') : false,
   user: null,
   loading: false,
   error: null,
-  isAuthenticated: false,
   showLoginModal: false,
   showRegisterModal: false,
 };
@@ -103,10 +104,30 @@ export const initAuth = createAsyncThunk(
   }
 );
 
-const authSlice = createSlice({
+export const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    setCredentials: (state, action: PayloadAction<{ token: string }>) => {
+      const { token } = action.payload;
+      state.token = token;
+      state.isAuthenticated = true;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('token', token);
+      }
+    },
+    setUser: (state, action: PayloadAction<User>) => {
+      state.user = action.payload;
+    },
+    clearUser: (state) => {
+      state.token = null;
+      state.isAuthenticated = false;
+      state.user = null;
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('refresh_token');
+      }
+    },
     clearError: (state) => {
       state.error = null;
     },
@@ -213,6 +234,13 @@ export const {
   openRegisterModal,
   closeRegisterModal,
   loginSuccess,
+  setCredentials,
+  setUser,
+  clearUser,
 } = authSlice.actions;
+
+export const selectCurrentToken = (state: RootState) => state.auth.token;
+export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated;
+export const selectUser = (state: RootState) => state.auth.user;
 
 export default authSlice.reducer;

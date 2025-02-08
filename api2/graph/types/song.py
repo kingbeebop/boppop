@@ -5,7 +5,7 @@ from strawberry.scalars import ID
 import strawberry
 from models.song import Song as SongModel
 from .pagination import Connection, Edge, PageInfo
-from .artist import SortDirection, ArtistRef
+from .artist import SortDirection, ArtistRef, Artist
 
 @strawberry.enum
 class SongSortField(Enum):
@@ -18,22 +18,28 @@ class Song:
     id: ID
     title: str
     url: str
+    artist_id: ID
     artist: ArtistRef
+    artist_name: str
     created_at: datetime = strawberry.field(name="createdAt")
     updated_at: datetime = strawberry.field(name="updatedAt")
 
     @classmethod
-    def from_db(cls, song: SongModel):
+    def from_db(cls, song_model):
+        """Convert a database model to a GraphQL type."""
+        if not song_model:
+            return None
+            
+        artist = song_model.artist
         return cls(
-            id=ID(str(song.id)),
-            title=song.title,
-            url=song.url,
-            artist=ArtistRef(
-                id=ID(str(song.artist_id)),
-                name=song.artist_name
-            ),
-            created_at=song.created_at,
-            updated_at=song.updated_at
+            id=ID(str(song_model.id)),
+            title=song_model.title,
+            url=song_model.url,
+            artist_id=ID(str(song_model.artist_id)),
+            artist=ArtistRef.from_db(artist),
+            artist_name=artist.name if artist else "",
+            created_at=song_model.created_at,
+            updated_at=song_model.updated_at
         )
 
 @strawberry.type

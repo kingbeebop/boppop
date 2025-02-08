@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { RootState } from '../store';
-import { getContest, submitVoteAndReview } from '../../services/api'; // Update with your API functions
-import { Song, Ballot, Playlist } from '../../types';
+import { getContest, postBallot } from '../../services/api'; // Update with your API functions
+import { Ballot, Playlist } from '../../types';
 
 interface ContestState {
   loading: boolean;
@@ -14,7 +14,7 @@ const initialState: ContestState = {
   loading: false,
   error: null,
   playlist: null,
-  ballot: { songId: null, comments: '', playlistId: '' },
+  ballot: { songId: null, comments: '' },
 };
 
 // Async thunk to fetch contest data
@@ -29,7 +29,7 @@ export const submitBallot = createAsyncThunk('contest/submitBallot', async (_, {
   const { ballot } = state.contest;
 
   if (ballot) {
-    const response = await submitVoteAndReview(ballot); // Submit the current ballot state
+    const response = await postBallot(ballot); // Submit the current ballot state
     return response;
   } else {
     // If ballot is null, do nothing and return null
@@ -67,7 +67,7 @@ const contestSlice = createSlice({
       .addCase(submitBallot.fulfilled, (state, action) => {
         state.loading = false;
         state.error = null;
-        state.ballot = action.payload; // Update ballot with response data
+        // state.ballot = action.payload; // Update ballot with response data
       })
       .addCase(submitBallot.rejected, (state, action) => {
         state.loading = false;

@@ -180,3 +180,12 @@ class ArtistRef:
     """A simplified artist reference."""
     id: ID
     name: str
+
+    @classmethod
+    def from_db(cls, artist_model):
+        if not artist_model:
+            return None
+        return cls(
+            id=ID(str(artist_model.id)),
+            name=artist_model.name
+        )
