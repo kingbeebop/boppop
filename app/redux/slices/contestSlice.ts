@@ -8,6 +8,7 @@ interface ContestState {
   error: string | null;
   playlist: Playlist | null; // Renamed from vote to playlist
   ballot: Ballot | null; // Updated to be nullable
+  voted: boolean;
 }
 
 const initialState: ContestState = {
@@ -15,6 +16,7 @@ const initialState: ContestState = {
   error: null,
   playlist: null,
   ballot: { songId: null, comments: '' },
+  voted: false,
 };
 
 // Async thunk to fetch contest data
@@ -24,15 +26,15 @@ export const getContestData = createAsyncThunk('contest/fetchContestData', async
 });
 
 // Async thunk to submit vote
-export const submitBallot = createAsyncThunk('contest/submitBallot', async (_, { getState }) => {
+export const submitBallot = createAsyncThunk('contest/submitBallot', async (_, { getState, dispatch }) => {
   const state = getState() as RootState;
   const { ballot } = state.contest;
 
   if (ballot) {
-    const response = await postBallot(ballot); // Submit the current ballot state
+    const response = await postBallot(ballot);
+    dispatch(setVoted(true));
     return response;
   } else {
-    // If ballot is null, do nothing and return null
     return null;
   }
 });
@@ -44,6 +46,9 @@ const contestSlice = createSlice({
   reducers: {
     setBallot(state, action) {
       state.ballot = action.payload;
+    },
+    setVoted(state, action) { 
+      state.voted = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -76,7 +81,7 @@ const contestSlice = createSlice({
   },
 });
 
-export const { setBallot } = contestSlice.actions;
+export const { setBallot, setVoted } = contestSlice.actions;
 
 export default contestSlice.reducer;
 

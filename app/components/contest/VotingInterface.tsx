@@ -3,6 +3,8 @@ import {
   Typography, 
   Button,
   TextField,
+  Alert,
+  Paper,
 } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../../redux/store';
@@ -13,7 +15,7 @@ import { selectChallenge } from '@/redux/slices/challengeSlice';
 const VotingInterface = () => {
   const dispatch = useDispatch<AppDispatch>();
   const challenge = useSelector(selectChallenge);
-  const ballot = useSelector((state: RootState) => state.contest.ballot);
+  const { ballot, voted } = useSelector((state: RootState) => state.contest);
 
   const handleVote = (songId: string) => {
     dispatch(setBallot({
@@ -45,6 +47,23 @@ const VotingInterface = () => {
       <Typography variant="h4" gutterBottom>
         {challenge.theme}
       </Typography>
+
+      {voted && (
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            mb: 3,
+            backgroundColor: 'transparent'
+          }}
+        >
+          <Alert 
+            severity="success"
+            sx={{ mb: 2 }}
+          >
+            Your vote has been recorded!
+          </Alert>
+        </Paper>
+      )}
       
       {challenge.songIds.map(songId => (
         <SongVoteCard
@@ -73,7 +92,7 @@ const VotingInterface = () => {
           onClick={() => dispatch(submitBallot())}
           disabled={!ballot?.songId}
         >
-          Submit Vote
+          {voted ? 'Update Vote' : 'Submit Vote'}
         </Button>
       </Box>
     </Box>
