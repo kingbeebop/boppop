@@ -38,7 +38,34 @@ async def seed_database():
                 logger.info("Database already contains data, skipping seed")
                 return
 
-            # Create users
+            # Create superusers
+            superusers = [
+                User(
+                    email="bop@boppop.com",
+                    username="Bop",
+                    hashed_password=get_password_hash("BigTime123"),
+                    is_active=True,
+                    is_verified=True,
+                    is_superuser=True,
+                    created_at=now(),
+                    updated_at=now()
+                ),
+                User(
+                    email="mel@boppop.com",
+                    username="Mel",
+                    hashed_password=get_password_hash("BigTime123"),
+                    is_active=True,
+                    is_verified=True,
+                    is_superuser=True,
+                    created_at=now(),
+                    updated_at=now()
+                )
+            ]
+            for superuser in superusers:
+                session.add(superuser)
+                logger.info(f"Created superuser '{superuser.username}'")
+
+            # Create test users
             users = [
                 User(
                     email=f"artist{i}@example.com",
@@ -106,11 +133,12 @@ async def seed_database():
             await session.commit()
 
             logger.info("Database seeded successfully with:")
-            logger.info("- 2 users created")
-            logger.info("- 2 artists created")
-            logger.info("- 6 songs created (3 per artist)")
-            logger.info("- 3 playlists created:")
-            logger.info("  * 2 past playlists with one song from each artist")
+            logger.info(f"- {len(superusers)} superusers created ({', '.join(su.username for su in superusers)})")
+            logger.info(f"- {len(users)} test users created")
+            logger.info(f"- {len(artists)} artists created")
+            logger.info(f"- {len(songs)} songs created ({len(songs) // len(artists)} per artist)")
+            logger.info(f"- {len(themes)} playlists created:")
+            logger.info(f"  * {len(themes)-1} past playlists with one song from each artist")
             logger.info("  * 1 active contest playlist with one song from each artist")
     except Exception as e:
         logger.error(f"Error seeding database: {str(e)}")
