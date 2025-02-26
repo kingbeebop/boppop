@@ -48,80 +48,16 @@ def challenge():
 @challenge.command()
 def start_contest():
     """Start the voting contest for the current challenge."""
-    async def _start_contest():
-        async with async_session_maker() as session:
-            challenge = await get_current_challenge(session)
-            if not challenge:
-                click.echo("No active challenge found")
-                return
-                
-            challenge.contest = True
-            await session.commit()
-            click.echo(f"Contest started for challenge #{challenge.number}")
-    
-    asyncio.run(_start_contest())
+    from tasks.challenge_tasks import start_contest
+    start_contest.delay()
+    click.echo("Contest start task scheduled")
 
 @challenge.command()
 def end_contest():
     """End the current contest and create a new challenge."""
-    async def _end_contest():
-        async with async_session_maker() as session:
-            # Get current challenge
-            challenge = await get_current_challenge(session)
-            if not challenge:
-                click.echo("No active challenge found")
-                return
-
-            # Get vote counts for songs in this challenge
-            vote_counts = await session.execute(
-                select(Vote.song_id, func.count(Vote.id).label('vote_count'))
-                .where(Vote.playlist_id == challenge.id)
-                .group_by(Vote.song_id)
-            )
-            vote_counts = vote_counts.all()
-
-            if not vote_counts:
-                click.echo("No votes found")
-                return
-
-            # Find max vote count
-            max_votes = max(count for _, count in vote_counts)
-            
-            # Get all songs with max votes
-            top_songs = [song_id for song_id, count in vote_counts if count == max_votes]
-            
-            # Randomly select winner from top songs
-            winner_id = random.choice(top_songs)
-            
-            # Update challenge
-            challenge.active = False
-            challenge.contest = False
-            challenge.winner_id = winner_id
-            
-            # Create new challenge
-            next_wednesday = await get_next_wednesday_8am()
-            new_challenge = Playlist(
-                number=challenge.number + 1,
-                theme="TBD",  # Theme will be set by winner
-                date=next_wednesday,
-                active=True,
-                contest=False
-            )
-            
-            session.add(new_challenge)
-            await session.commit()
-            
-            # Get winner details for output
-            winner = await session.execute(
-                select(Song).where(Song.id == winner_id)
-            )
-            winner = winner.scalar_one()
-            
-            click.echo(f"Contest ended for challenge #{challenge.number}")
-            click.echo(f"Winner: {winner.title} by {winner.artist.name}")
-            click.echo(f"New challenge #{new_challenge.number} created")
-    
-    asyncio.run(_end_contest())
+    from tasks.challenge_tasks import end_contest
+    end_contest.delay()
+    click.echo("Contest end task scheduled")
 
 if __name__ == '__main__':
     challenge() 

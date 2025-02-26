@@ -82,6 +82,56 @@ services:
       timeout: 3s
       retries: 5
 
+  celery_worker:
+    build:
+      context: ./api2
+      dockerfile: Dockerfile
+    command: >
+      bash -c "
+        sleep 5 &&
+        celery -A core.celery worker --loglevel=info
+      "
+    networks:
+      - boppop_network
+    environment:
+      - POSTGRES_SERVER=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=boppop_user
+      - JWT_SECRET=${JWT_SECRET}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      fastapi:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery_beat:
+    build:
+      context: ./api2
+      dockerfile: Dockerfile
+    command: >
+      bash -c "
+        sleep 10 &&
+        celery -A core.celery beat --loglevel=info
+      "
+    networks:
+      - boppop_network
+    environment:
+      - POSTGRES_SERVER=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=boppop_user
+      - JWT_SECRET=${JWT_SECRET}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      celery_worker:
+        condition: service_started
+
 networks:
   boppop_network:
     driver: bridge

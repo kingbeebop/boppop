@@ -24,6 +24,7 @@ fastapi-users = {version = "^14.0.1", extras = ["sqlalchemy"]}
 asyncpg = "^0.30.0"
 click = "^8.1.8"
 pytz = "^2025.1"
+celery = "^5.4.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

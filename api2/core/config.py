@@ -40,6 +40,11 @@ class Settings(BaseSettings):
     REDIS_HOST: str = "redis"
     REDIS_PORT: int = 6379
 
+    @property
+    def REDIS_URL(self) -> str:
+        """Redis URL for Celery."""
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/0"
+
     model_config = SettingsConfigDict(
         case_sensitive=True,
         env_file=".env",
