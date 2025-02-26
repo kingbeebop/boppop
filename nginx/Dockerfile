@@ -10,4 +10,4 @@ COPY nginx.conf /etc/nginx/nginx.conf
 RUN mkdir -p /run/nginx
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD wget --quiet --tries=1 --spider http://localhost/health || exit 1 
+    CMD wget --quiet --tries=1 --spider http://167.172.251.135/health || exit 1 

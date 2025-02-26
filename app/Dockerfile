@@ -13,8 +13,8 @@ RUN npm ci
 COPY . .
 
 # Set environment variables for build time
-ENV NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
-ENV NEXT_PUBLIC_API_URL=http://localhost:8080/api
+ENV NEXT_PUBLIC_API_BASE_URL=http://167.172.251.135:8080
+ENV NEXT_PUBLIC_API_URL=http://167.172.251.135:8080/api
 
 # Build application
 RUN npm run build
@@ -34,8 +34,8 @@ COPY --from=builder /app/tsconfig.json ./tsconfig.json
 
 # Set environment variables for runtime
 ENV NODE_ENV=production
-ENV NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
-ENV NEXT_PUBLIC_API_URL=http://localhost:8080/api
+ENV NEXT_PUBLIC_API_BASE_URL=http://167.172.251.135:8080
+ENV NEXT_PUBLIC_API_URL=http://167.172.251.135:8080/api
 
 EXPOSE 3000
 
@@ -44,7 +44,7 @@ CMD ["sh", "-c", "npx ts-node server.ts"]
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://167.172.251.135:3000/api/health || exit 1
 
 # Install wget for healthcheck
 RUN apk add --no-cache wget

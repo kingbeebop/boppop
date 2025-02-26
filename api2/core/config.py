@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30  # Added for FastAPI Users
 
     # CORS settings
-    FRONTEND_URL: str = Field(default="http://localhost:3000")
+    FRONTEND_URL: str = Field(default="http://167.172.251.135:3000")
     PRODUCTION_URL: str = Field(default="http://167.172.251.135:8080")
     
     @property
@@ -43,7 +43,7 @@ class Settings(BaseSettings):
         return [
             self.FRONTEND_URL,
             self.PRODUCTION_URL,
-            "http://localhost:8080"  # Development URL
+            "http://167.172.251.135:8080"  # Development URL
         ]
 
     # Redis settings

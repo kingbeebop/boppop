@@ -19,4 +19,4 @@ sleep 10
 # Check service health
 docker compose ps
 
-echo "Services are running at http://localhost:8080" 
+echo "Services are running at http://167.172.251.135:8080" 

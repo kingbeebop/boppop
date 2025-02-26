@@ -5,7 +5,7 @@ export async function baseFetch<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://167.172.251.135:8000/api';
   
   const headers = new Headers(options.headers || {});
   headers.set('Accept', 'application/json');

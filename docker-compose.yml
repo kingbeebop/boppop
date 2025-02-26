@@ -35,7 +35,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://167.172.251.135:8000/health"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -48,8 +48,8 @@ services:
     networks:
       - boppop_network
     environment:
-      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
-      - NEXT_PUBLIC_API_URL=http://localhost:8080/api
+      - NEXT_PUBLIC_API_BASE_URL=http://167.172.251.135:8080
+      - NEXT_PUBLIC_API_URL=http://167.172.251.135:8080/api
     depends_on:
       fastapi:
         condition: service_healthy

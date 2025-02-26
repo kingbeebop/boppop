@@ -32,4 +32,4 @@ ENTRYPOINT ["/api2/scripts/entrypoint.sh"]
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://167.172.251.135:8000/health || exit 1

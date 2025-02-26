@@ -45,7 +45,7 @@ jobs:
         DB_NAME: test_db
         DB_USER: test_user
         DB_PASSWORD: test_password
-        DB_HOST: localhost
+        DB_HOST: 167.172.251.135
       run: |
         python manage.py test
 

@@ -5,7 +5,7 @@ let apiUrl = process.env.API_BASE_URL
 
 if (!apiUrl) {
   //throw new Error("NEXT_PUBLIC_API_BASE_URL is not defined");
-  apiUrl = "http://localhost:8000"
+  apiUrl = "http://167.172.251.135:8000"
 }
 
 console.log("API Base URL:", apiUrl); // Log this to confirm the value

@@ -6,8 +6,8 @@ The Bop Pop API uses GraphQL to provide flexible data access and manipulation. T
 ## Getting Started
 
 ### GraphQL Endpoint
-- Development: `http://localhost:8000/graphql`
-- GraphiQL Interface: `http://localhost:8000/graphql`
+- Development: `http://167.172.251.135:8000/graphql`
+- GraphiQL Interface: `http://167.172.251.135:8000/graphql`
 
 ### Authentication
 Include the JWT token in the Authorization header:
@@ -241,6 +241,6 @@ GraphQL errors will be returned in the following format:
 5. Use variables for dynamic values
 
 ## Tools
-- [GraphiQL](http://localhost:8000/graphql): Interactive in-browser GraphQL IDE
+- [GraphiQL](http://167.172.251.135:8000/graphql): Interactive in-browser GraphQL IDE
 - [Apollo Client](https://www.apollographql.com/docs/react/): Recommended client for React applications
 - [GraphQL Code Generator](https://www.graphql-code-generator.com/): Generate TypeScript types from your queries 

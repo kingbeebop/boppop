@@ -30,7 +30,7 @@ DEBUG = True
 
 ADMIN_URL = '/api/admin/'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '167.172.251.135']
+ALLOWED_HOSTS = ['167.172.251.135', '127.0.0.1', '167.172.251.135']
 
 # Application definition
 
@@ -149,7 +149,7 @@ SIMPLE_JWT = {
 # SESSION_COOKIE_AGE = 1209600  # Set the session cookie age in seconds (e.g., 2 weeks)
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
+    'http://167.172.251.135:3000',
     'http://167.172.251.135:3000',
 ]
 
