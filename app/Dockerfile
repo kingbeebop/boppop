@@ -48,3 +48,16 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 # Install wget for healthcheck
 RUN apk add --no-cache wget
+
+# Install curl for health checks
+RUN apk add --no-cache curl
+
+WORKDIR /app
+
+RUN npm install
+
+RUN npm run build
+
+EXPOSE 3000
+
+CMD ["npm", "start"]

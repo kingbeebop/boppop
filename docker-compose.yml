@@ -48,8 +48,16 @@ services:
     networks:
       - boppop_network
     environment:
-      - NEXT_PUBLIC_API_BASE_URL=http://167.172.251.135:8080
-      - NEXT_PUBLIC_API_URL=http://167.172.251.135:8080/api
+      - NEXT_PUBLIC_API_BASE_URL=http://167.172.251.135:8000
+      - NEXT_PUBLIC_API_URL=http://167.172.251.135:8000/api
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     depends_on:
       fastapi:
         condition: service_healthy
