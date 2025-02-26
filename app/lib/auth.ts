@@ -1,5 +1,5 @@
 export const handleLogin = async (credentials: { username: string; password: string }) => {
-  const response = await fetch('/api/auth/login', {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/jwt/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -8,6 +8,7 @@ export const handleLogin = async (credentials: { username: string; password: str
       username: credentials.username,
       password: credentials.password,
     }),
+    credentials: 'include',
   });
 
   if (!response.ok) {

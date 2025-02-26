@@ -35,11 +35,16 @@ class Settings(BaseSettings):
 
     # CORS settings
     FRONTEND_URL: str = Field(default="http://localhost:3000")
+    PRODUCTION_URL: str = Field(default="http://167.172.251.135:8080")
     
     @property
     def CORS_ORIGINS(self) -> List[str]:
         """List of allowed origins for CORS."""
-        return [self.FRONTEND_URL]
+        return [
+            self.FRONTEND_URL,
+            self.PRODUCTION_URL,
+            "http://localhost:8080"  # Development URL
+        ]
 
     # Redis settings
     REDIS_HOST: str = "redis"
