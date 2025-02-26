@@ -3,13 +3,11 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-
 # Install dependencies
+COPY package*.json ./
 RUN npm ci
 
-# Copy source and env files
+# Copy source files
 COPY . .
 
 # Set environment variables for build time
@@ -21,6 +19,9 @@ RUN npm run build
 
 # Production stage
 FROM node:18-alpine AS runner
+
+# Install health check dependencies
+RUN apk add --no-cache wget curl
 
 WORKDIR /app
 
@@ -39,25 +40,9 @@ ENV NEXT_PUBLIC_API_URL=http://167.172.251.135:8080/api
 
 EXPOSE 3000
 
-# Use a shell to ensure environment variables are available
-CMD ["sh", "-c", "npx ts-node server.ts"]
-
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://167.172.251.135:3000/api/health || exit 1
+    CMD curl -f http://localhost:3000/api/health || exit 1
 
-# Install wget for healthcheck
-RUN apk add --no-cache wget
-
-# Install curl for health checks
-RUN apk add --no-cache curl
-
-WORKDIR /app
-
-RUN npm install
-
-RUN npm run build
-
-EXPOSE 3000
-
-CMD ["npm", "start"]
+# Start the server
+CMD ["npx", "ts-node", "server.ts"]

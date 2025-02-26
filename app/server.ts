@@ -6,36 +6,47 @@ import cors from 'cors';
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
+const port = process.env.PORT || 3000;
 
-app.prepare().then(() => {
-  const server = express();
+(async () => {
+  try {
+    await app.prepare();
+    const server = express();
 
-  // Configure CORS middleware
-  server.use(cors({
-    origin: 'http://167.172.251.135',
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'Authorization'], // Add any other required headers
-    credentials: true, // Allow cookies to be sent with the request
-    preflightContinue: false,
-    optionsSuccessStatus: 200,
-  }));
+    // Configure CORS middleware
+    server.use(cors({
+      origin: 'http://167.172.251.135',
+      methods: ['GET', 'POST'],
+      allowedHeaders: ['Content-Type', 'Authorization'], // Add any other required headers
+      credentials: true, // Allow cookies to be sent with the request
+      preflightContinue: false,
+      optionsSuccessStatus: 200,
+    }));
 
-  // Custom middleware or routes
-  server.get('/custom-route', (req, res) => {
-    const parsedUrl = parse(req.url!, true);
-    return app.render(req, res, '/custom-page', parsedUrl.query);
-  });
+    // Custom middleware or routes
+    server.get('/custom-route', (req, res) => {
+      const parsedUrl = parse(req.url!, true);
+      return app.render(req, res, '/custom-page', parsedUrl.query);
+    });
 
-  server.all('*', (req, res) => {
-    return handle(req, res);
-  });
+    // Health check endpoint
+    server.get('/api/health', (req, res) => {
+      res.status(200).json({ status: 'healthy' });
+    });
 
-  const PORT = 3000;
+    // Handle all other routes with Next.js
+    server.all('*', (req, res) => {
+      return handle(req, res);
+    });
 
-  server.listen(PORT, () => {
-    console.log(`Express server is listening on port ${PORT}`);
-  });
-});
+    server.listen(port, () => {
+      console.log(`> Ready on http://localhost:${port}`);
+    });
+  } catch (e) {
+    console.error(e);
+    process.exit(1);
+  }
+})();
 
 
 
