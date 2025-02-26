@@ -51,10 +51,20 @@ def start_contest():
                 if not challenge:
                     logger.error("No active challenge found")
                     return
+
+                # If theme is TBD, set a default theme based on highest playlist number
+                if challenge.theme == "TBD":
+                    # Get highest playlist number
+                    result = await session.execute(
+                        select(func.max(Playlist.number))
+                        .select_from(Playlist)
+                    )
+                    max_number = result.scalar() or 0
+                    challenge.theme = f"Theme {max_number + 1}"
                     
                 challenge.contest = True
                 await session.commit()
-                logger.info(f"Contest started for challenge #{challenge.number}")
+                logger.info(f"Contest started for challenge #{challenge.number} with theme: {challenge.theme}")
         except Exception as e:
             logger.error(f"Error starting contest: {str(e)}")
             raise

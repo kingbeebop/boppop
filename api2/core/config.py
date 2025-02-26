@@ -34,7 +34,12 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30  # Added for FastAPI Users
 
     # CORS settings
-    CORS_ORIGINS: List[str] = ["*"]
+    FRONTEND_URL: str = Field(default="http://localhost:3000")
+    
+    @property
+    def CORS_ORIGINS(self) -> List[str]:
+        """List of allowed origins for CORS."""
+        return [self.FRONTEND_URL]
 
     # Redis settings
     REDIS_HOST: str = "redis"
