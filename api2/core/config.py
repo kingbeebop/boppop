@@ -43,7 +43,10 @@ class Settings(BaseSettings):
         return [
             self.FRONTEND_URL,
             self.PRODUCTION_URL,
-            "http://167.172.251.135:8080"  # Development URL
+            "http://167.172.251.135:8080",
+            "http://167.172.251.135:3000",
+            "http://localhost:3000",
+            "http://localhost:8080"
         ]
 
     # Redis settings

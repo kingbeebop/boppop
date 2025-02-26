@@ -9,10 +9,12 @@ export const handleLogin = async (credentials: { username: string; password: str
       password: credentials.password,
     }),
     credentials: 'include',
+    mode: 'cors',
   });
 
   if (!response.ok) {
-    throw new Error('Login failed');
+    const error = await response.text();
+    throw new Error(error || 'Login failed');
   }
 
   const data = await response.json();
