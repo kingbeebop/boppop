@@ -41,7 +41,7 @@ const port = process.env.PORT || 3000;
     });
 
     server.listen(port, () => {
-      console.log(`> Ready on http://localhost:${port}`);
+      console.log(`> Ready on http://167.172.251.135:${port}`);
     });
   } catch (e) {
     console.error(e);
