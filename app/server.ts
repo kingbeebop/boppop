@@ -31,6 +31,7 @@ const port = process.env.PORT || 3000;
 
     // Health check endpoint
     server.get('/api/health', (req, res) => {
+      console.log('Health check requested');
       res.status(200).json({ status: 'healthy' });
     });
 
