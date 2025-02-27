@@ -38,7 +38,8 @@ RUN if [ ! -f tsconfig.json ]; then \
 ENV NEXT_PUBLIC_API_BASE_URL=http://167.172.251.135:8080
 ENV NEXT_PUBLIC_API_URL=http://167.172.251.135:8080/api
 
-# Build application
+# Fix TypeScript modules and build
+RUN npm run fix-ts || true  # Don't fail if script doesn't exist yet
 RUN npm run build
 
 # Production stage

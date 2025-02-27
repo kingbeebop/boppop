@@ -136,3 +136,6 @@
 //     body: JSON.stringify(data),
 //   });
 // };
+
+// Since this file is currently just comments, we need to make it a module
+export {}; // This makes the file a TypeScript module
