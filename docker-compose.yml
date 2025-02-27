@@ -17,7 +17,7 @@ services:
 
   fastapi:
     build:
-      context: ./api2
+      context: ./api
       dockerfile: Dockerfile
     ports:
       - "${BACKEND_PORT}:${BACKEND_PORT}"
@@ -70,7 +70,7 @@ services:
       - POSTGRES_DB=boppop_user
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./api2/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./api/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
     command: ["postgres", "-c", "listen_addresses=*"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
@@ -92,7 +92,7 @@ services:
 
   celery_worker:
     build:
-      context: ./api2
+      context: ./api
       dockerfile: Dockerfile
     command: >
       bash -c "
@@ -118,7 +118,7 @@ services:
 
   celery_beat:
     build:
-      context: ./api2
+      context: ./api
       dockerfile: Dockerfile
     command: >
       bash -c "

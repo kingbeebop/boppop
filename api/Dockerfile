@@ -1,35 +1,35 @@
-FROM python:3.11-slim
+FROM python:3.11-slim as builder
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-ENV DEBUG=True
-ENV DB_HOST=db
-ENV DB_PORT=5432
-
-WORKDIR /app
-
-# Install system dependencies
+# Install system dependencies including PostgreSQL client
 RUN apt-get update && apt-get install -y \
     postgresql-client \
-    libpq-dev \
-    gcc \
-    python3-dev \
-    netcat-traditional \
     curl \
+    netcat-traditional \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Poetry
+ENV POETRY_HOME=/opt/poetry
+RUN curl -sSL https://install.python-poetry.org | python3 - && \
+    cd /usr/local/bin && \
+    ln -s /opt/poetry/bin/poetry && \
+    poetry config virtualenvs.create false
 
-# Copy project files
-COPY . .
+# Copy only requirements to cache them in docker layer
+WORKDIR /api
+COPY poetry.lock pyproject.toml /api/
 
-# Make sure the entrypoint script is executable
-RUN chmod +x /app/manage.py
+# Install dependencies (without dev dependencies)
+RUN poetry install --only main --no-root
 
-# Add a healthcheck
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://167.172.251.135:8000/health/ || exit 1
+# Copy project
+COPY . /api/
 
-# Command is specified in docker-compose.yml 
+# Make scripts executable
+RUN chmod +x /api/scripts/entrypoint.sh
+
+# Set entrypoint
+ENTRYPOINT ["/api/scripts/entrypoint.sh"]
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://167.172.251.135:8000/health || exit 1

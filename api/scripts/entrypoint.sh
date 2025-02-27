@@ -20,7 +20,7 @@ PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_SERVER -U $POSTGRES_USER -d post
     PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_SERVER -U $POSTGRES_USER -d postgres -c "CREATE DATABASE $POSTGRES_DB"
 
 # Check current database state
-export PYTHONPATH=/api2
+export PYTHONPATH=/api
 log "Checking database state..."
 
 # Clean database if needed
