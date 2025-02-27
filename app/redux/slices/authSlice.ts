@@ -75,11 +75,18 @@ export const register = createAsyncThunk(
 
 export const logout = createAsyncThunk(
   'auth/logout',
-  async (_, { dispatch }) => {
-    await logoutUser();
-    localStorage.removeItem('token');
-    dispatch(clearSubmission());
-    return null;
+  async (_, { dispatch, rejectWithValue }) => {
+    try {
+      await logoutUser();
+      dispatch(clearSubmission());
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('refresh_token');
+      }
+      return null;
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Logout failed');
+    }
   }
 );
 
@@ -118,6 +125,7 @@ export const authSlice = createSlice({
     },
     setUser: (state, action: PayloadAction<User>) => {
       state.user = action.payload;
+      state.isAuthenticated = !!action.payload;
     },
     clearUser: (state) => {
       state.token = null;
@@ -162,6 +170,15 @@ export const authSlice = createSlice({
       state.loading = false;
       state.error = null;
     },
+    setShowLoginModal: (state, action: PayloadAction<boolean>) => {
+      state.showLoginModal = action.payload;
+    },
+    setLoading: (state, action) => {
+      state.loading = action.payload;
+    },
+    setError: (state, action) => {
+      state.error = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -195,10 +212,22 @@ export const authSlice = createSlice({
         state.error = action.error.message || 'Registration failed';
       })
       // Logout
+      .addCase(logout.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(logout.fulfilled, (state) => {
         state.token = null;
         state.user = null;
         state.isAuthenticated = false;
+        state.loading = false;
+        state.error = null;
+        state.showLoginModal = false;
+        state.showRegisterModal = false;
+      })
+      .addCase(logout.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string || 'Logout failed';
       })
       // Init Auth
       .addCase(initAuth.pending, (state) => {
@@ -237,6 +266,9 @@ export const {
   setCredentials,
   setUser,
   clearUser,
+  setShowLoginModal,
+  setLoading,
+  setError,
 } = authSlice.actions;
 
 export const selectCurrentToken = (state: RootState) => state.auth.token;

@@ -9,6 +9,7 @@ import {
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../../redux/store';
 import { setBallot, submitBallot } from '../../redux/slices/contestSlice';
+import { setShowLoginModal } from '../../redux/slices/authSlice';
 import SongVoteCard from './SongVoteCard';
 import { selectChallenge } from '@/redux/slices/challengeSlice';
 
@@ -16,6 +17,7 @@ const VotingInterface = () => {
   const dispatch = useDispatch<AppDispatch>();
   const challenge = useSelector(selectChallenge);
   const { ballot, voted } = useSelector((state: RootState) => state.contest);
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
   const handleVote = (songId: string) => {
     dispatch(setBallot({
@@ -30,6 +32,14 @@ const VotingInterface = () => {
       ...ballot,
       comments: comment
     }));
+  };
+
+  const handleSubmit = () => {
+    if (!isAuthenticated) {
+      dispatch(setShowLoginModal(true));
+      return;
+    }
+    dispatch(submitBallot());
   };
 
   if (!challenge.contest) {
@@ -89,7 +99,7 @@ const VotingInterface = () => {
         <Button
           variant="contained"
           size="large"
-          onClick={() => dispatch(submitBallot())}
+          onClick={handleSubmit}
           disabled={!ballot?.songId}
         >
           {voted ? 'Update Vote' : 'Submit Vote'}
