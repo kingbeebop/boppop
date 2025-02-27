@@ -5,8 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "prebuild": "rm -rf .next",
-    "fix-ts": "ts-node scripts/fix-ts-modules.ts",
-    "build": "npm run fix-ts && next build",
+    "build": "next build",
     "start": "ts-node server.ts",
     "lint": "next lint"
   },
