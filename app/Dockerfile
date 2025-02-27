@@ -11,8 +11,13 @@ RUN npm install
 COPY . .
 
 # Set environment variables for build time
-ENV NEXT_PUBLIC_API_BASE_URL=http://167.172.251.135:8000
-ENV NEXT_PUBLIC_API_URL=http://167.172.251.135:8000/api
+ARG HOST_IP
+ARG FRONTEND_PORT
+ARG API_BASE_URL
+ARG API_URL
+
+ENV NEXT_PUBLIC_API_BASE_URL=${API_BASE_URL}
+ENV NEXT_PUBLIC_API_URL=${API_URL}
 
 # Build application
 RUN npm run build
@@ -35,14 +40,16 @@ COPY --from=builder /app/tsconfig.json ./tsconfig.json
 
 # Set environment variables for runtime
 ENV NODE_ENV=production
-ENV NEXT_PUBLIC_API_BASE_URL=http://167.172.251.135:8000
-ENV NEXT_PUBLIC_API_URL=http://167.172.251.135:8000/api
+ENV HOST_IP=${HOST_IP}
+ENV FRONTEND_PORT=${FRONTEND_PORT}
+ENV NEXT_PUBLIC_API_BASE_URL=${API_BASE_URL}
+ENV NEXT_PUBLIC_API_URL=${API_URL}
 
-EXPOSE 3000
+EXPOSE ${FRONTEND_PORT}
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://167.172.251.135:3000/api/health || exit 1
+    CMD curl -f http://localhost:${FRONTEND_PORT}/api/health || exit 1
 
 # Start the server
 CMD ["npx", "ts-node", "server.ts"]

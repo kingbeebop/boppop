@@ -2,11 +2,15 @@ import express from 'express';
 import { parse } from 'url';
 import next from 'next';
 import cors from 'cors';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
-const port = process.env.PORT || 3000;
+const port = process.env.FRONTEND_PORT || 3000;
+const hostIP = process.env.HOST_IP || 'localhost';
 
 (async () => {
   try {
@@ -15,7 +19,7 @@ const port = process.env.PORT || 3000;
 
     // Configure CORS middleware
     server.use(cors({
-      origin: 'http://167.172.251.135',
+      origin: `http://${hostIP}`,
       methods: ['GET', 'POST'],
       allowedHeaders: ['Content-Type', 'Authorization'], // Add any other required headers
       credentials: true, // Allow cookies to be sent with the request
@@ -41,7 +45,7 @@ const port = process.env.PORT || 3000;
     });
 
     server.listen(port, () => {
-      console.log(`> Ready on http://167.172.251.135:${port}`);
+      console.log(`> Ready on http://${hostIP}:${port}`);
     });
   } catch (e) {
     console.error(e);
