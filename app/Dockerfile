@@ -10,6 +10,30 @@ RUN npm install
 # Copy source files
 COPY . .
 
+# Create a TypeScript configuration file if it doesn't exist
+RUN if [ ! -f tsconfig.json ]; then \
+    echo '{ \
+      "compilerOptions": { \
+        "target": "es5", \
+        "lib": ["dom", "dom.iterable", "esnext"], \
+        "allowJs": true, \
+        "skipLibCheck": true, \
+        "strict": true, \
+        "forceConsistentCasingInFileNames": true, \
+        "noEmit": true, \
+        "esModuleInterop": true, \
+        "module": "esnext", \
+        "moduleResolution": "node", \
+        "resolveJsonModule": true, \
+        "isolatedModules": true, \
+        "jsx": "preserve", \
+        "incremental": true \
+      }, \
+      "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"], \
+      "exclude": ["node_modules"] \
+    }' > tsconfig.json; \
+    fi
+
 # Set environment variables for build time
 ENV NEXT_PUBLIC_API_BASE_URL=http://167.172.251.135:8080
 ENV NEXT_PUBLIC_API_URL=http://167.172.251.135:8080/api
