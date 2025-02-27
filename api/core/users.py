@@ -24,6 +24,7 @@ from core.config import settings
 from core.security import create_access_token
 from fastapi_users.exceptions import InvalidPasswordException, UserAlreadyExists
 from .auth import get_user_manager
+from core.user_utils import ensure_user_has_artist
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -129,23 +130,14 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
         user_dict["username"] = user_create.username
         user_dict["hashed_password"] = self.password_helper.hash(user_dict.pop("password"))
 
-        # Get current time for timestamps
-        now = datetime.now(timezone.utc)
-
         async with self.user_db.session as session:
             try:
                 user = User(**user_dict)
                 session.add(user)
                 await session.flush()
-
-                artist = Artist(
-                    name=user_create.username,
-                    user_id=user.id,
-                    created_at=now,
-                    updated_at=now
-                )
-                session.add(artist)
                 
+                # Create artist profile
+                await ensure_user_has_artist(session, user)
                 await session.commit()
                 await session.refresh(user)
                 return user

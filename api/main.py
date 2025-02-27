@@ -9,10 +9,54 @@ from core.events import *  # This will register our event listeners
 from schemas.graphql import graphql_app
 from db.session import engine
 from strawberry.fastapi import GraphQLRouter
+import os
+from models.base import Base
+from scripts.seed import seed_database
+import logging
+from sqlalchemy import text
+
+logger = logging.getLogger(__name__)
+
+async def init_db():
+    """Initialize database with tables and seed data."""
+    try:
+        db_clean = os.getenv('DB_CLEAN', 'false').lower() == 'true'
+        logger.info(f"DB_CLEAN is set to: {db_clean}")
+
+        if db_clean:
+            logger.info("Dropping and recreating database schema...")
+            async with engine.begin() as conn:
+                await conn.execute(text("DROP SCHEMA public CASCADE"))
+                await conn.execute(text("CREATE SCHEMA public"))
+                await conn.execute(text(f"GRANT ALL ON SCHEMA public TO {settings.POSTGRES_USER}"))
+                await conn.execute(text("GRANT ALL ON SCHEMA public TO public"))
+                await conn.commit()
+
+            # Let alembic handle the migrations instead of SQLAlchemy
+            from alembic.config import Config
+            from alembic import command
+            import asyncio
+
+            def run_migrations():
+                alembic_cfg = Config("alembic.ini")
+                command.upgrade(alembic_cfg, "head")
+
+            # Run migrations in a thread since alembic is synchronous
+            await asyncio.get_event_loop().run_in_executor(None, run_migrations)
+            logger.info("Database migrations completed")
+
+            logger.info("Seeding database...")
+            await seed_database()
+            logger.info("Database initialization completed")
+
+    except Exception as e:
+        logger.error(f"Error during database initialization: {str(e)}")
+        raise
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
+    await init_db()
     yield
     # Shutdown
     await engine.dispose()

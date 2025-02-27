@@ -2,6 +2,7 @@ from typing import Optional
 from sqlalchemy import select
 from models.user import User
 from core.security import get_password_hash
+from core.user_utils import ensure_user_has_artist
 from ..types import User as UserType
 from strawberry.types import Info
 from sqlalchemy.exc import IntegrityError
@@ -12,7 +13,7 @@ async def register(
     password: str,
     info: Info
 ) -> Optional[UserType]:
-    """Register a new user."""
+    """Register a new user and create associated artist profile."""
     session = await info.context.get_session()
     async with session.begin():
         try:
@@ -33,6 +34,10 @@ async def register(
                 is_active=True
             )
             session.add(user)
+            await session.flush()  # Flush to get the user.id
+            
+            # Create artist profile
+            await ensure_user_has_artist(session, user)
             await session.commit()
             
             return UserType.from_db(user)

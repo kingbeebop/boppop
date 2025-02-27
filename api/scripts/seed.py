@@ -1,8 +1,7 @@
 from typing import List
-import asyncio
 import logging
-from datetime import date, datetime, timezone
-from sqlalchemy import select, func
+from datetime import datetime, timezone, date
+from sqlalchemy import select
 from db.session import async_session_maker
 from models.user import User
 from models.artist import Artist
@@ -10,17 +9,7 @@ from models.song import Song
 from models.playlist import Playlist
 from core.security import get_password_hash
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-TEST_SOUNDCLOUD_URLS = [
-    "https://soundcloud.com/artist1/song1",
-    "https://soundcloud.com/artist1/song2",
-    "https://soundcloud.com/artist1/song3",
-    "https://soundcloud.com/artist2/song1",
-    "https://soundcloud.com/artist2/song2",
-    "https://soundcloud.com/artist2/song3",
-]
 
 def now() -> datetime:
     """Get current UTC datetime."""
@@ -30,15 +19,7 @@ async def seed_database():
     """Seed the database with initial data."""
     try:
         async with async_session_maker() as session:
-            # Check if database already has data
-            result = await session.execute(select(func.count()).select_from(User))
-            count = result.scalar()
-            
-            if count > 0:
-                logger.info("Database already contains data, skipping seed")
-                return
-
-            # Create superusers
+            # Create superusers - artists will be created by event listeners
             superusers = [
                 User(
                     email="bop@boppop.com",
@@ -46,9 +27,7 @@ async def seed_database():
                     hashed_password=get_password_hash("BigTime123"),
                     is_active=True,
                     is_verified=True,
-                    is_superuser=True,
-                    created_at=now(),
-                    updated_at=now()
+                    is_superuser=True
                 ),
                 User(
                     email="mel@boppop.com",
@@ -56,94 +35,61 @@ async def seed_database():
                     hashed_password=get_password_hash("BigTime123"),
                     is_active=True,
                     is_verified=True,
-                    is_superuser=True,
-                    created_at=now(),
-                    updated_at=now()
+                    is_superuser=True
                 )
             ]
-            for superuser in superusers:
-                session.add(superuser)
-                logger.info(f"Created superuser '{superuser.username}'")
-
-            # Create test users
-            users = [
-                User(
-                    email=f"artist{i}@example.com",
-                    username=f"artist{i}",
-                    hashed_password=get_password_hash("password123"),
-                    is_active=True,
-                    is_verified=True,
-                    created_at=now(),
-                    updated_at=now()
-                )
-                for i in range(1, 3)
-            ]
-            for user in users:
-                session.add(user)
-
-            # Create artists
-            artists = [
-                Artist(
-                    name=f"Test Artist {i}",
-                    bio=f"Bio for test artist {i}",
-                    user=users[i-1],
-                    created_at=now(),
-                    updated_at=now()
-                )
-                for i in range(1, 3)
-            ]
-            for artist in artists:
-                session.add(artist)
-
-            # Create songs (3 per artist)
-            songs = []
-            for i, artist in enumerate(artists):
-                for j in range(3):
-                    song = Song(
-                        title=f"Song {j+1} by {artist.name}",
-                        url=TEST_SOUNDCLOUD_URLS[i*3 + j],
-                        artist=artist,
-                        created_at=now(),
-                        updated_at=now()
-                    )
-                    songs.append(song)
-                    session.add(song)
-
-            # Create playlists with songs
-            themes = ["Past Theme", "Second Theme", "Current Contest Theme"]
-            for i, theme in enumerate(themes, 1):
-                playlist = Playlist(
-                    number=i,
-                    theme=theme,
-                    date=date(2024, i, 1),
-                    active=i == 3,
-                    contest=i == 3,
-                    created_at=now(),
-                    updated_at=now()
-                )
-                # Add one song from each artist to each playlist
-                playlist_songs = [
-                    songs[0 + (i-1)],  # Song from Artist 1
-                    songs[3 + (i-1)]   # Song from Artist 2
-                ]
-                playlist.songs.extend(playlist_songs)
-                session.add(playlist)
-
-            # Commit all changes in a single transaction
+            
+            # Add users and commit to trigger event listeners
+            session.add_all(superusers)
             await session.commit()
 
-            logger.info("Database seeded successfully with:")
-            logger.info(f"- {len(superusers)} superusers created ({', '.join(su.username for su in superusers)})")
-            logger.info(f"- {len(users)} test users created")
-            logger.info(f"- {len(artists)} artists created")
-            logger.info(f"- {len(songs)} songs created ({len(songs) // len(artists)} per artist)")
-            logger.info(f"- {len(themes)} playlists created:")
-            logger.info(f"  * {len(themes)-1} past playlists with one song from each artist")
-            logger.info("  * 1 active contest playlist with one song from each artist")
+            # Get the created artists
+            artists = []
+            for user in superusers:
+                result = await session.execute(
+                    select(Artist).where(Artist.user_id == user.id)
+                )
+                artist = result.scalar_one()
+                artists.append(artist)
+
+            # Create test songs
+            songs = [
+                Song(
+                    title=f"Test Song {i}",
+                    url=f"https://soundcloud.com/artist{artist.id}/song{i}",
+                    artist_id=artist.id,
+                    created_at=now(),
+                    updated_at=now()
+                )
+                for artist in artists
+                for i in range(1, 4)  # 3 songs per artist
+            ]
+            session.add_all(songs)
+            await session.flush()
+
+            # Create test playlists
+            playlists = [
+                Playlist(
+                    number=i,
+                    theme=f"Test Theme {i}",
+                    date=date(2024, 1, i),
+                    active=i == 1,  # Only first playlist is active
+                    contest=True,
+                    created_at=now(),
+                    updated_at=now()
+                )
+                for i in range(1, 4)  # Create 3 playlists
+            ]
+            session.add_all(playlists)
+            
+            await session.commit()
+            logger.info("Database seeded successfully")
+
     except Exception as e:
         logger.error(f"Error seeding database: {str(e)}")
         await session.rollback()
         raise
 
 if __name__ == "__main__":
+    import asyncio
     asyncio.run(seed_database())

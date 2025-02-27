@@ -32,6 +32,7 @@ services:
       - POSTGRES_DB=${DB_NAME}
       - JWT_SECRET=${JWT_SECRET}
       - REDIS_URL=redis://redis:6379
+      - DB_CLEAN=${DB_CLEAN}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://${HOST_IP}:${BACKEND_PORT}/health"]
       interval: 10s

@@ -24,7 +24,7 @@ export PYTHONPATH=/api
 log "Checking database state..."
 
 # Clean database if needed
-if [ "$CLEAN_DB" = "true" ]; then
+if [ "$DB_CLEAN" = "true" ]; then
     log "Cleaning database..."
     PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_SERVER -U $POSTGRES_USER -d $POSTGRES_DB -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
 fi
@@ -32,22 +32,6 @@ fi
 # Run initial migration if needed
 log "Running database migrations..."
 alembic upgrade head
-
-log "Seeding database..."
-python << END
-import asyncio
-import logging
-from scripts.seed import seed_database
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-try:
-    asyncio.run(seed_database())
-except Exception as e:
-    logger.error(f"Error seeding database: {str(e)}")
-    raise
-END
 
 log "Database initialization completed"
 
